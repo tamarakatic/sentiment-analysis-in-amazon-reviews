@@ -19,7 +19,7 @@ p = Preprocessor()
 stemmer = SnowballStemmer('english')
 lemmatizer = WordNetLemmatizer()
 
-df = pd.read_csv('../dataset/small_train.csv', nrows=30000, header=None)
+df = pd.read_csv('../dataset/test.csv', nrows=30000, header=None)
 
 
 def preprocess(review):
