@@ -1,87 +1,176 @@
 import re
+import enchant
+
 from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
+from nltk.stem import WordNetLemmatizer
+from pipe import Pipe
 
-NEGATIVE_CONSTRUCTS = set([
-    "ain't",
-    "can't",
-    "cannot"
-    "don't"
-    "isn't"
-    "mustn't",
-    "needn't",
-    "neither",
-    "never",
-    "no",
-    "nobody",
-    "none",
-    "nothing",
-    "nowhere"
-    "shan't",
-    "shouldn't",
-    "wasn't"
-    "weren't",
-    "won't"
-])
-
-URLS = r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+' \
-    '[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+' \
-    '[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]\.' \
-    '[^\s]{2,}|www\.[a-zA-Z0-9]\.[^\s]{2,})'
+from .patterns import NEGATIVE_CONSTRUCTS
+from .patterns import NEGATIVE_EMOTICONS
+from .patterns import POSITIVE_EMOTICONS
+from .patterns import URLS
 
 
-POSITIVE_EMOTICONS = set([
-    ':-)', ':)', ':-]', ':-3', ':3', ':^)',
-    '8-)', '8)', '=]', '=)', ':-D', ':D', ':-))'
-])
+class Options(object):
+    EMAILS = 'emails'
+    EMOTICONS = 'emoticons'
+    LEMMATIZER = 'lemmatizer'
+    NEGATIVE_CONSTRUCTS = 'negative_constructs'
+    REPEATING_VOWELS = 'repeating_vowels'
+    SPELLING = 'spelling'
+    STEMMER = 'stemmer'
+    STOPWORDS = 'stopwords'
+    URLS = 'urls'
 
-NEGATIVE_EMOTICONS = set([
-    ':-(', ':(', ':-c', ':c', ':<', ':[', ':''-(',
-    ':-[', ':-||', '>:[', ':{', '>:(', ':-|', ':|',
-    ':/', ':-/', ':\'', '>:/', ':S'
-])
+    def all():
+        return set([
+            Options.EMAILS,
+            Options.EMOTICONS,
+            Options.LEMMATIZER,
+            Options.NEGATIVE_CONSTRUCTS,
+            Options.REPEATING_VOWELS,
+            Options.SPELLING,
+            Options.STEMMER,
+            Options.STOPWORDS,
+            Options.URLS
+        ])
 
 
-class Preprocessor(object):
-    def __init__(self):
-        pass
+OPTIONS = Options.all()
 
-    def replace_negative_constructs(self, sentence):
-        """Replaces negative english constructs with 'not' word."""
-        words = []
-        for word in sentence.lower().split():
-            if word in NEGATIVE_CONSTRUCTS:
-                words.append('not')
-            else:
-                words.append(word)
-        return ' '.join(words)
 
-    def remove_repeating_vowels(self, sentence):
-        """Removes unnecessary repeating vowels. i.e. cooooool -> cool"""
-        return re.sub(r'(.)\1+', r'\1\1', sentence)
+def configure(options):
+    global OPTIONS
 
-    def replace_emoticons_with_tags(self, sentence):
-        words = sentence.split()
+    OPTIONS = options
 
-        for i, word in enumerate(words):
-            if word in POSITIVE_EMOTICONS:
-                words[i] = 'positive'
-            if word in NEGATIVE_EMOTICONS:
-                words[i] = 'negative'
-        return ' '.join(words)
 
-    def remove_whitespace(self, sentence):
-        return re.sub(r'\s+', ' ', sentence)
+def clean(sentence):
+    return sentence.lower() \
+        | remove_repeating_vowels \
+        | replace_negative_constructs \
+        | replace_emoticons_with_tags \
+        | remove_urls \
+        | remove_emails \
+        | remove_punctuation \
+        | remove_misspelled_words \
+        | stem \
+        | lemmatize
 
-    def remove_punctuation(self, sentence):
-        return re.sub(r'[^\w\s\']', '', sentence)
 
-    def remove_urls(self, sentence):
-        return re.sub(URLS, '', sentence)
+@Pipe
+def remove_repeating_vowels(sentence):
+    if Options.REPEATING_VOWELS not in OPTIONS:
+        return sentence
+    return re.sub(r'(.)\1+', r'\1\1', sentence)
 
-    def remove_emails(self, sentence):
-        return re.sub(r'\S*@\S*\s?', '', sentence)
 
-    def remove_stopwords(self, sentence):
-        stop = set(stopwords.words('english'))
-        words = sentence.lower().split()
-        return ' '.join([word for word in words if word not in stop])
+@Pipe
+def replace_negative_constructs(sentence):
+    if Options.NEGATIVE_CONSTRUCTS not in OPTIONS:
+        return sentence
+
+    words = []
+    for word in sentence.lower().split():
+        if word in NEGATIVE_CONSTRUCTS:
+            words.append('not')
+        else:
+            words.append(word)
+    return ' '.join(words)
+
+
+@Pipe
+def replace_emoticons_with_tags(sentence):
+    if Options.EMOTICONS not in OPTIONS:
+        return sentence
+
+    words = sentence.split()
+    for i, word in enumerate(words):
+        if word in POSITIVE_EMOTICONS:
+            words[i] = 'positive'
+        if word in NEGATIVE_EMOTICONS:
+            words[i] = 'negative'
+    return ' '.join(words)
+
+
+@Pipe
+def remove_urls(sentence):
+    if Options.URLS not in OPTIONS:
+        return sentence
+    return re.sub(URLS, '', sentence)
+
+
+@Pipe
+def remove_emails(sentence):
+    if Options.EMAILS not in OPTIONS:
+        return sentence
+    return re.sub(r'\S*@\S*\s?', '', sentence)
+
+
+@Pipe
+def remove_stopwords(sentence):
+    if Options.STOPWORDS not in OPTIONS:
+        return sentence
+
+    stop = set(stopwords.words('english'))
+    words = sentence.lower().split()
+    return ' '.join([word for word in words if word not in stop])
+
+
+LEMMATIZER = None
+
+
+@Pipe
+def lemmatize(sentence):
+    if Options.LEMMATIZER not in OPTIONS:
+        return sentence
+
+    global LEMMATIZER
+    if LEMMATIZER is None:
+        LEMMATIZER = WordNetLemmatizer()
+
+    lemmatized = [LEMMATIZER.lemmatize(word, pos='v')
+                  for word in sentence.split()]
+    return ' '.join(lemmatized)
+
+
+STEMMER = None
+
+
+@Pipe
+def stem(sentence):
+    if Options.STEMMER not in OPTIONS:
+        return sentence
+
+    global STEMMER
+    if STEMMER is None:
+        STEMMER = SnowballStemmer('english')
+
+    stemmed = [STEMMER.stem(word) for word in sentence.split()]
+    return ' '.join(stemmed)
+
+
+DICTIONARY = None
+
+
+@Pipe
+def remove_misspelled_words(sentence):
+    if Options.SPELLING not in OPTIONS:
+        return sentence
+
+    global DICTIONARY
+    if DICTIONARY is None:
+        DICTIONARY = enchant.Dict('en_US')
+
+    return [word for word in sentence.split() if DICTIONARY.check(word)]
+
+
+@Pipe
+def remove_whitespace(sentence):
+    return re.sub(r'\s+', ' ', sentence)
+
+
+@Pipe
+def remove_punctuation(sentence):
+    return re.sub(r'[^\w\s\']', '', sentence)
