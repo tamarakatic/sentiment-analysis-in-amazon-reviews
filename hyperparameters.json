@@ -16,5 +16,11 @@
     "vect__max_df": 0.75,
     "vect__ngram_range": [1, 3],
     "clf__alpha": 1.0
+  },
+
+  "random_forest": {
+    "vect__max_df": 1.0,
+    "vect__ngram_range": [1, 2],
+    "clf__n_estimators": 20
   }
 }
