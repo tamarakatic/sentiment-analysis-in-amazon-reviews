@@ -1,91 +1,100 @@
+import os
+import pandas as pd
+import data.preprocessor as preprocessor
+
+from data.preprocessor import Options
+from time import time
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import SGDClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
-from data.preprocessor import Preprocessor
-from nltk.stem.snowball import SnowballStemmer
-from nltk.stem import WordNetLemmatizer
+from sklearn.svm import LinearSVC
 
-from pprint import pprint
-from time import time
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn.pipeline import Pipeline
 
-import pandas as pd
-import enchant
-
-dictionary = enchant.Dict('en_US')
-p = Preprocessor()
-stemmer = SnowballStemmer('english')
-lemmatizer = WordNetLemmatizer()
-
-df = pd.read_csv('../dataset/test.csv', nrows=30000, header=None)
+current_filepath = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = os.path.abspath(os.path.join(current_filepath, os.pardir))
 
 
-def preprocess(review):
-    review = review.lower()
+def load_data(path, rows=None):
+    print("\n=> Loading dataset...")
 
-    no_repeating = p.remove_repeating_vowels(review)
-    negative = p.replace_negative_constructs(no_repeating)
-    no_emoticons = p.replace_emoticons_with_tags(negative)
-    no_urls = p.remove_urls(no_emoticons)
-    no_emails = p.remove_emails(no_urls)
-    no_punc = p.remove_punctuation(no_emails)
-
-    enchanted = []
-    for word in no_punc.split():
-        if dictionary.check(word):
-            enchanted.append(word)
-
-    no_stop = p.remove_stopwords(' '.join(enchanted))
-    no_whitespace = p.remove_whitespace(no_stop)
-
-    stemmed = [lemmatizer.lemmatize(word)
-               for word in no_whitespace.split()]
-    return ' '.join(stemmed)
+    return pd.read_csv(path, nrows=rows, header=None)
 
 
-processed_df = df[2].apply(lambda x: preprocess(x))
+def clean_data(data_frame, options):
+    print("=> Processing dataset...")
 
-data = processed_df.values
-labels = df.iloc[:, 0].values
+    preprocessor.configure(options)
+    processed_df = data_frame[2].apply(
+        lambda review: preprocessor.clean(review)
+    )
 
-pipeline = Pipeline([
-    ('vect', CountVectorizer(ngram_range=(1, 3))),
-    ('tfidf', TfidfTransformer()),
-    ('clf',  MultinomialNB()),
-])
+    return processed_df.values, data_frame.iloc[:, 0].values
 
-parameters = {
-    'vect__max_df': (0.75, 1.0),
-    'vect__max_features': (50000, 80000, 100000),
-    # 'vect__ngram_range': ((1, 3), (1, 2)),  # unigrams or bigrams
-    # 'tfidf__use_idf': (True, False),
-    # 'tfidf__norm': ('l1', 'l2'),
-    # 'clf__alpha': (0.00001, 0.000001),
-    # 'clf__max_iter': (50, 75, 100),
-    'clf__alpha': (0.75, 1.0)
-}
+
+def create_bow_pipeline(classifier):
+    return Pipeline([
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer()),
+        ('clf',  classifier),
+    ])
+
 
 if __name__ == "__main__":
-    # multiprocessing requires the fork to happen in a __main__ protected
-    # block
+    data_path = os.path.join(ROOT_PATH, 'dataset/data.csv')
+    data = load_data(path=data_path, rows=20000)
 
-    # find the best parameters for both the feature extraction and the
+    options = Options.all()
+    options.remove(Options.STEMMER)
+    options.remove(Options.SPELLING)
+
+    samples, labels = clean_data(data, options)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        samples, labels, test_size=0.33, random_state=42
+    )
+
+    pipeline = create_bow_pipeline(classifier=MultinomialNB())
+    parameters = {
+        'vect__max_df': (0.75, 1.0),
+        # 'vect__max_features': (50000, 80000, 100000),
+        'vect__ngram_range': ((1, 3), (1, 2)),
+        # 'clf__max_iter': (75, 100, 125),
+        # 'clf__loss': ('hinge', 'squared_hinge'),
+        'clf__alpha': (1.0, 2.0, 10.0)
+        # 'clf__C': (1.0, 0.1, 10)
+    }
+
+    # Find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=0)
+    grid_search = GridSearchCV(
+        pipeline, parameters, n_jobs=-1, verbose=1, cv=3
+    )
 
-    print("Performing grid search...")
-    print("pipeline:", [name for name, _ in pipeline.steps])
-    print("parameters:")
-    pprint(parameters)
-    t0 = time()
-    grid_search.fit(data, labels)
-    print("done in %0.3fs" % (time() - t0))
-    print()
+    print("=> Performing grid search...\n")
 
-    print("Best score: %0.3f" % grid_search.best_score_)
+    t = time()
+    grid_search.fit(X_train, y_train)
+
+    print("\n=> Done in {:.3f}s\n".format(time() - t))
+    print("Best score: {:.3f}".format(grid_search.best_score_))
     print("Best parameters set:")
+
     best_parameters = grid_search.best_estimator_.get_params()
+
     for param_name in sorted(parameters.keys()):
         print("\t%s: %r" % (param_name, best_parameters[param_name]))
+
+    predictions = grid_search.best_estimator_.predict(X_test)
+
+    report = classification_report(
+        y_test, predictions, target_names=['Negative', 'Positive']
+    )
+
+    print("\n{}".format(report))
