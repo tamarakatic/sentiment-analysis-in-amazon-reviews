@@ -103,8 +103,9 @@ ENV/
 dataset/
 .DS_Store
 data/__pycache__/
-**/*.csv
 
-# doc2vec model
+# Ignore models
+**/*.csv
 **/*.model
 **/*.npy
+**/*.model
