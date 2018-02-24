@@ -3,15 +3,15 @@ import multiprocessing
 import numpy as np
 
 from data.preprocessor import Options
-from data.loader import load_data, clean_data
+from data.loader import load_and_clean_data
+from train_doc2vec_model import label_reviews
+from train_doc2vec_model import train_model
 
 from texttable import Texttable
 
 from gensim.test.test_doc2vec import ConcatenatedDoc2Vec
-from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
 
-from sklearn import utils
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 
@@ -27,14 +27,6 @@ EPOCHS = 10
 
 VECTOR_SIZES = [100, 200, 300, 400]
 ALPHAS = [0.1, 0.08, 0.06, 0.04]
-
-
-def labelize_reviews(reviews, label_type):
-    labeled = []
-    for idx, review in enumerate(reviews):
-        label = "{}_{}".format(label_type, idx)
-        labeled.append(TaggedDocument(review.split(), [label]))
-    return labeled
 
 
 def infer_vectors(model, corpus, vector_size, steps=3, alpha=0.05):
@@ -60,22 +52,8 @@ def validation_accuracy_for_model(model,
     return classifier.score(val_vecs, y_val) * 100.0
 
 
-def load_and_clean_data(path):
-    data_path = os.path.join(ROOT_PATH, path)
-    data = load_data(path=data_path, rows=ROWS)
-
-    options = set([
-        Options.EMOTICONS,
-        Options.EMAILS,
-        Options.URLS,
-        Options.REPEATING_VOWELS,
-    ])
-
-    return clean_data(data, options)
-
-
 def build_vocabulary(models, corpus):
-    # Speed up setup by sharing results of the 1st model's vocabulary scan
+    # Speed up setup by sharing results of the 1st model"s vocabulary scan
     models[0].build_vocab(corpus)
     for model in models[1:]:
         model.reset_from(models[0])
@@ -99,8 +77,8 @@ def create_models(corpus, vector_size):
     build_vocabulary(models, corpus)
 
     models_by_name = OrderedDict((str(model), model) for model in models)
-    models_by_name['dbow + dmm'] = ConcatenatedDoc2Vec([models[1], models[2]])
-    models_by_name['dbow + dmc'] = ConcatenatedDoc2Vec([models[1], models[0]])
+    models_by_name["dbow + dmm"] = ConcatenatedDoc2Vec([models[1], models[2]])
+    models_by_name["dbow + dmc"] = ConcatenatedDoc2Vec([models[1], models[0]])
     return models_by_name
 
 
@@ -109,9 +87,9 @@ def cross_validate(samples, labels):
         samples, labels, test_size=0.1, random_state=42
     )
 
-    train_corpus = labelize_reviews(X_train, 'TRAIN')
-    test_corpus = labelize_reviews(X_test, 'TEST')
-    corpus = labelize_reviews(samples, label_type='REVIEW')
+    train_corpus = label_reviews(X_train, "TRAIN")
+    test_corpus = label_reviews(X_test, "TEST")
+    corpus = label_reviews(samples, label_type="REVIEW")
 
     total_iterations = len(VECTOR_SIZES) * len(ALPHAS)
     iteration = 1
@@ -129,25 +107,17 @@ def cross_validate(samples, labels):
                                           learning_rate))
             iteration += 1
 
-            alpha, min_alpha, passes = (learning_rate, 0.001, EPOCHS)
-            alpha_delta = (alpha - min_alpha) / passes
-
             models = create_models(corpus, vector_size)
+            alpha, min_alpha, passes = (learning_rate, 0.001, EPOCHS)
 
-            for epoch in range(passes):
-                # Shuffling gets best results
-                train_data = utils.shuffle(corpus)
+            # Train
+            for name, model in models.items():
+                train_model(model, corpus, passes,
+                            alpha=alpha,
+                            min_alpha=min_alpha,
+                            save=False)
 
-                for name, model in models.items():
-                    model.alpha, model.min_alpha = alpha, alpha
-
-                    model.train(
-                        train_data,
-                        total_examples=len(train_data),
-                        epochs=1
-                    )
-                alpha -= alpha_delta
-
+            # Validate
             for name, model in models.items():
                 acc = validation_accuracy_for_model(
                     model, train_corpus, y_train, test_corpus, y_test
@@ -155,20 +125,22 @@ def cross_validate(samples, labels):
 
                 if acc > best_results[name][0]:
                     best_results[name] = (acc, vector_size, learning_rate)
+
     return best_results
 
 
 def print_results(results, save=False):
     table = Texttable()
-    headings = ['Accuracy', 'Vector Size', 'Alpha', 'Model']
+    headings = ["Accuracy", "Vector Size", "Alpha", "Model"]
     table.header(headings)
+    table.set_cols_align(["c"] * len(headings))
 
     accuracies = []
     vector_sizes = []
     alphas = []
     models = []
     for accuracy, params, model_name in results:
-        accuracies.append("{:.2f}%".format(accuracy))
+        accuracies.append("{:.2f}".format(accuracy))
         vector_sizes.append(params[0])
         alphas.append(params[1])
         models.append(model_name)
@@ -183,22 +155,31 @@ def print_results(results, save=False):
         import pandas as pd
 
         data = {
-            'Accuracy': accuracies,
-            'Vector Size': vector_sizes,
-            'Alpha': alphas,
-            'Model': models
+            "Accuracy": accuracies,
+            "Vector Size": vector_sizes,
+            "Alpha": alphas,
+            "Model": models
         }
 
         df = pd.DataFrame(data, columns=headings)
 
-        filename = 'doc2vec_cv_results.csv'
+        filename = "doc2vec_cv_results.csv"
         df.to_csv(filename, index=False)
 
         print("\n=> Results saved to '{}'".format(filename))
 
 
-if __name__ == '__main__':
-    samples, labels = load_and_clean_data('dataset/data_all.csv')
+if __name__ == "__main__":
+    data_path = os.path.join(ROOT_PATH, "dataset/data_all.csv")
+
+    options = set([
+        Options.EMOTICONS,
+        Options.EMAILS,
+        Options.URLS,
+        Options.REPEATING_VOWELS,
+    ])
+
+    samples, labels = load_and_clean_data(data_path, options, ROWS)
 
     results = cross_validate(samples, labels)
 
