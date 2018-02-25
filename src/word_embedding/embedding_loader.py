@@ -1,8 +1,8 @@
 import numpy as np
 
 
-def glove_dataset(path):
-    print("\nLoading GloVe dataset...")
+def loading_embedding_dataset(path):
+    print("\nLoading embedding dataset...")
     glove_w2v = {}
     with open(path, 'rb') as f:
         for line in f:
