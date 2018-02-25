@@ -2,6 +2,7 @@ import numpy as np
 
 
 def glove_dataset(path):
+    print("\nLoading GloVe dataset...")
     glove_w2v = {}
     with open(path, 'rb') as f:
         for line in f:
