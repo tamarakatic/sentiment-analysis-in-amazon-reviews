@@ -5,26 +5,29 @@ from mean_embedding_vectorizer import MeanEmbeddingVectorizer
 from data.glove_dataset import glove_dataset
 from tfidf_embedding_vectorizer import TfidfEmbeddingVectorizer
 
-glove_w2v = glove_dataset('../dataset/glove.840B.300d.txt')
-
 
 def bag_of_words(classifier, tf_idf=True):
     if tf_idf:
         steps = [('vect', TfidfVectorizer())]
     else:
-        steps = [('vect', CountVectorizer())]
+        steps = [('count', CountVectorizer())]
 
     steps.append(('cls', classifier))
     return Pipeline(steps)
 
 
-def glove_vectorizer(classifier):
+def glove_mean_vectorizer(classifier):
+    glove_w2v = glove_dataset('../dataset/glove.840B.300d.txt')
     steps = [('vect', MeanEmbeddingVectorizer(glove_w2v))]
     steps.append(('cls', classifier))
     return Pipeline(steps)
 
 
-def tfidf_vectorizer(classifier):
-    steps = [('vect', TfidfEmbeddingVectorizer(glove_w2v))]
+def glove_tfidf_vectorizer(classifier, word2vec=None):
+    if word2vec:
+        embedding = word2vec
+    else:
+        embedding = glove_dataset('../dataset/glove.840B.300d.txt')
+    steps = [('vect', TfidfEmbeddingVectorizer(embedding))]
     steps.append(('cls', classifier))
     return Pipeline(steps)
