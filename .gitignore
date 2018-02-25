@@ -104,8 +104,8 @@ dataset/
 .DS_Store
 data/__pycache__/
 
-# Ignore models
+# Ignore saved models
 **/*.csv
 **/*.model
 **/*.npy
-**/*.model
+**/*.hdf5
