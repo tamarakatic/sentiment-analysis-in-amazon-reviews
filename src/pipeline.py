@@ -16,9 +16,12 @@ def bag_of_words(classifier, tf_idf=True):
     return Pipeline(steps)
 
 
-def glove_mean_vectorizer(classifier):
-    glove_w2v = glove_dataset('../dataset/glove.840B.300d.txt')
-    steps = [('vect', MeanEmbeddingVectorizer(glove_w2v))]
+def glove_mean_vectorizer(classifier, word2vec=None):
+    if word2vec:
+        embedding = word2vec
+    else:
+        embedding = glove_dataset('../dataset/glove.840B.300d.txt')
+    steps = [('vect', MeanEmbeddingVectorizer(embedding))]
     steps.append(('cls', classifier))
     return Pipeline(steps)
 
