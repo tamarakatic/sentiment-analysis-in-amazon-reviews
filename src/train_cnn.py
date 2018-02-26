@@ -1,78 +1,41 @@
-import pandas as pd
+import pickle
+
+from data.loader import load_and_clean_data
+from word_based_cnn import WordBasedCNN
 
 from sklearn.model_selection import train_test_split
 
-from keras.layers import Activation
-from keras.layers import Conv1D
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.layers import Embedding
-from keras.layers import GlobalMaxPooling1D
-from keras.models import Sequential
-from keras.layers.normalization import BatchNormalization
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
-from data.preprocessor import Options
-from data.loader import clean_data
 
-MAX_NUM_WORDS = 60000
-MAX_SEQUENCE_LENGTH = 500
-EMBEDDING_DIM = 50
+ROWS = 200000
 
-df = pd.read_csv('../dataset/data_all.csv', nrows=800000, header=None)
+MAX_NUM_WORDS = 30000
+MAX_SEQUENCE_LENGTH = 400
+EMBEDDING_DIM = 300
 
-options = set([
-    Options.EMAILS,
-    Options.EMOTICONS,
-    Options.REPEATING_VOWELS,
-    Options.URLS,
-])
-
-texts, labels = clean_data(df, options)
+texts, labels = load_and_clean_data(path="../dataset/data_all.csv",
+                                    nrows=ROWS)
 
 tokenizer = Tokenizer(num_words=MAX_NUM_WORDS)
 tokenizer.fit_on_texts(texts)
-sequences = tokenizer.texts_to_sequences(texts)
 
-data = pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH)
+sequences = tokenizer.texts_to_sequences(texts)
+data = pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH, padding="post")
 
 X_train, X_test, y_train, y_test = train_test_split(
     data, labels, test_size=0.1, random_state=42
 )
 
-model = Sequential()
+model = WordBasedCNN(max_words=MAX_NUM_WORDS,
+                     max_sequence=MAX_SEQUENCE_LENGTH,
+                     embedding_dim=EMBEDDING_DIM,
+                     deep_model=False)
 
-model.add(Embedding(MAX_NUM_WORDS,
-                    EMBEDDING_DIM,
-                    input_length=MAX_SEQUENCE_LENGTH))
+history = model.fit(X_train, y_train, X_test, y_test)
 
-model.add(Dropout(0.4))
+print("\n=> Saving training history...")
 
-model.add(Conv1D(256,
-                 10,
-                 padding='valid',
-                 strides=1))
-
-model.add(BatchNormalization(axis=-1))
-model.add(Activation('relu'))
-model.add(GlobalMaxPooling1D())
-
-model.add(Dense(256))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
-
-model.add(Dense(1))
-model.add(Activation('sigmoid'))
-
-model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
-              metrics=['accuracy'])
-
-model.fit(X_train, y_train,
-          batch_size=64,
-          epochs=5,
-          validation_data=(X_test, y_test))
-
-model.save_weights('../models/cnn_weights.h5')
+with open("history.pkl", "wb") as file:
+    pickle.dump(history.history, file)

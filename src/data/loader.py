@@ -6,7 +6,7 @@ from dask.multiprocessing import get
 import data.preprocessor as preprocessor
 
 
-def load_and_clean_data(path, options, nrows=None):
+def load_and_clean_data(path, options=(), nrows=None):
     print("\n=> Loading dataset...")
     data_frame = pd.read_csv(path, nrows=nrows, header=None)
 
