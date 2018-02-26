@@ -6,6 +6,7 @@ from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers import Embedding
 from keras.layers import MaxPooling1D
+from keras.layers import GlobalMaxPooling1D
 from keras.layers import Flatten
 from keras.models import Sequential
 from keras.callbacks import ModelCheckpoint
@@ -29,7 +30,7 @@ class WordBasedCNN(object):
 
         self.checkpoint_path = os.path.join(
             ROOT_PATH,
-            "../models/{}.hdf5".format("deep" if deep_model else "shallow")
+            "models/{}.hdf5".format("deep" if deep_model else "shallow")
         )
 
         self.model = self._compile_model(deep_model)
@@ -63,11 +64,9 @@ class WordBasedCNN(object):
                             input_length=self.max_sequence))
 
         model.add(Conv1D(filters=256, kernel_size=10, activation="relu"))
-        model.add(MaxPooling1D(3))
+        model.add(GlobalMaxPooling1D())
 
-        model.add(Flatten())
-
-        model.add(Dense(units=1024, activation="relu"))
+        model.add(Dense(units=512, activation="relu"))
         model.add(Dropout(0.5))
 
         model.add(Dense(units=1))
