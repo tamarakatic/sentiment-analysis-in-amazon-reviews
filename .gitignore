@@ -109,3 +109,4 @@ data/__pycache__/
 **/*.model
 **/*.npy
 **/*.hdf5
+**/*.pkl
