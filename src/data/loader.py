@@ -6,18 +6,26 @@ from dask.multiprocessing import get
 import data.preprocessor as preprocessor
 
 
-def load_data(path, rows=None, clean=True):
+def load_and_clean_data(path, options, nrows=None):
+    print("\n=> Loading dataset...")
+    data_frame = pd.read_csv(path, nrows=nrows, header=None)
+
+    print("=> Cleaning dataset...")
+    samples, labels = clean_data(data_frame, options)
+
+    return samples, labels
+
+
+def load_data(path, rows=None):
     print("\n=> Loading dataset...")
 
     return pd.read_csv(path, nrows=rows, header=None)
 
 
 def clean_data(data_frame, options, parallel=True):
-    print("=> Cleaning dataset...")
-
     preprocessor.configure(options)
 
-    # data_frame[0] contains reviews data
+    # data_frame[2] contains reviews data
     reviews = data_frame[2]
 
     if parallel:
