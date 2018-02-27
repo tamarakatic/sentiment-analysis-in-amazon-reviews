@@ -20,6 +20,7 @@ class WordBasedCNN(object):
                  max_words,
                  max_sequence,
                  embedding_dim,
+                 save_best=False,
                  deep_model=False,
                  weights_path=None):
 
@@ -27,6 +28,7 @@ class WordBasedCNN(object):
         self.max_sequence = max_sequence
         self.embedding_dim = embedding_dim
         self.weights_path = weights_path
+        self.save_best = save_best
 
         self.checkpoint_path = os.path.join(
             ROOT_PATH,
@@ -42,6 +44,9 @@ class WordBasedCNN(object):
                               validation_data=(X_val, y_val),
                               callbacks=self._callbacks())
 
+    def evaluate(self, X_test, y_test):
+        return self.model.evaluate(X_test, y_test, verbose=1)
+
     def _compile_model(self, deep_model):
         if deep_model:
             model = self._create_deep_model()
@@ -49,6 +54,7 @@ class WordBasedCNN(object):
             model = self._create_shallow_model()
 
         if self.weights_path is not None and os.path.isfile(self.weights_path):
+            print("\n-- Loading pretrained model --\n")
             model.load_weights(self.weights_path)
 
         model.compile(loss="binary_crossentropy",
@@ -108,8 +114,9 @@ class WordBasedCNN(object):
         return model
 
     def _callbacks(self):
-        return [
-            ModelCheckpoint(filepath=self.checkpoint_path,
-                            verbose=0,
-                            save_best_only=True)
-        ]
+        callbacks = []
+        if self.save_best:
+            callbacks.append(ModelCheckpoint(filepath=self.checkpoint_path,
+                                             verbose=1,
+                                             save_best_only=True))
+        return callbacks
