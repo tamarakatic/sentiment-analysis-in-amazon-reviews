@@ -8,8 +8,9 @@ import data.preprocessor as preprocessor
 
 def load_data(path, rows=None, clean=True):
     print("\n=> Loading dataset...")
-
-    return pd.read_csv(path, nrows=rows, header=None)
+    data_frame = pd.read_csv(path, nrows=rows, header=None)
+    data_frame.fillna("", inplace=True)
+    return data_frame
 
 
 def clean_data(data_frame, options, parallel=True):
@@ -17,8 +18,7 @@ def clean_data(data_frame, options, parallel=True):
 
     preprocessor.configure(options)
 
-    # data_frame[0] contains reviews data
-    reviews = data_frame[2]
+    reviews = data_frame[1] + " " + data_frame[2]
 
     if parallel:
         cpu_cores = multiprocessing.cpu_count()
