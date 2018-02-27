@@ -19,8 +19,9 @@ def load_and_clean_data(path, options=(), nrows=None):
 
 def load_data(path, rows=None):
     print("\n=> Loading dataset...")
-
-    return pd.read_csv(path, nrows=rows, header=None)
+    data_frame = pd.read_csv(path, nrows=rows, header=None)
+    data_frame.fillna("", inplace=True)
+    return data_frame
 
 
 def clean_data(data_frame, options, parallel=True):
