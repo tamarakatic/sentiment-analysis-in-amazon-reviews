@@ -17,6 +17,7 @@ class Options(object):
     EMOTICONS = 'emoticons'
     LEMMATIZER = 'lemmatizer'
     NEGATIVE_CONSTRUCTS = 'negative_constructs'
+    PUNCTUATION = 'punctuation'
     REPEATING_VOWELS = 'repeating_vowels'
     SPELLING = 'spelling'
     STEMMER = 'stemmer'
@@ -173,4 +174,7 @@ def remove_whitespace(sentence):
 
 @Pipe
 def remove_punctuation(sentence):
+    if Options.PUNCTUATION not in OPTIONS:
+        return sentence
+
     return re.sub(r'[^\w\s\']', '', sentence)
