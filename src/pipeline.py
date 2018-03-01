@@ -5,9 +5,9 @@ from gensim.models import Doc2Vec
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from mean_embedding_vectorizer import MeanEmbeddingVectorizer
+from embedding_vectorizer import MeanEmbeddingVectorizer
 from word_embedding.embedding_loader import loading_embedding_dataset
-from tfidf_embedding_vectorizer import TfidfEmbeddingVectorizer
+from embedding_vectorizer import TfidfEmbeddingVectorizer
 
 current_filepath = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.path.abspath(os.path.join(current_filepath, os.pardir))
@@ -42,7 +42,7 @@ def glove_tfidf_vectorizer(classifier, word2vec=None):
     steps.append(('cls', classifier))
     return Pipeline(steps)
 
-  
+
 def doc2vec(classifier):
     model_filename = "models/doc2vec.model"
     model_path = os.path.join(ROOT_PATH, model_filename)
