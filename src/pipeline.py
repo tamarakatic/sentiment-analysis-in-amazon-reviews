@@ -1,13 +1,13 @@
 import os
 
-from doc2vec_vectorizer import Doc2VecVectorizer
 from gensim.models import Doc2Vec
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from embedding_vectorizer import MeanEmbeddingVectorizer
+from word_embedding import MeanEmbeddingVectorizer
+from word_embedding import TfidfEmbeddingVectorizer
+from word_embedding import Doc2VecVectorizer
 from word_embedding.embedding_loader import loading_embedding_dataset
-from embedding_vectorizer import TfidfEmbeddingVectorizer
 
 current_filepath = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.path.abspath(os.path.join(current_filepath, os.pardir))
