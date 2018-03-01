@@ -35,7 +35,7 @@ class WordEmbeddingBasedCNN(object):
                             self.embedding_dim,
                             weights=[self.embedding_matrix],
                             input_length=self.max_seq_length,
-                            trainable=False))
+                            trainable=True))
 
         model.add(Conv1D(filters=256, kernel_size=5, activation='relu'))
         model.add(MaxPooling1D(5))
