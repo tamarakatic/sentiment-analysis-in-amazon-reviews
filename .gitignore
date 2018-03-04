@@ -100,12 +100,16 @@ ENV/
 # mypy
 .mypy_cache/
 
-dataset/
 .DS_Store
 data/__pycache__/
 
-# Ignore saved models
+# Datasets
+**/*.txt
+**/*.zip
+**/*.gz
 **/*.csv
+
+# Ignore saved models
 **/*.model
 **/*.npy
 **/*.hdf5
