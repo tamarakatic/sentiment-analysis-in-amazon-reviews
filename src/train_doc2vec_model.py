@@ -3,6 +3,8 @@ import multiprocessing
 
 from timeit import default_timer as timer
 
+from definitions import ROOT_PATH
+from definitions import TRAIN_PATH
 from data.preprocessor import Options
 from data.loader import load_and_clean_data
 
@@ -10,9 +12,6 @@ from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
 
 from sklearn import utils
-
-current_filepath = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.path.abspath(os.path.join(current_filepath, os.pardir))
 
 WORKERS = multiprocessing.cpu_count()
 ROWS = 1000000
@@ -74,8 +73,6 @@ def train_model(model, corpus, epochs,
 
 
 def create_corpus():
-    data_path = os.path.join(ROOT_PATH, "dataset/data_all.csv")
-
     options = set([
         Options.EMOTICONS,
         Options.EMAILS,
@@ -83,7 +80,7 @@ def create_corpus():
         Options.REPEATING_VOWELS,
     ])
 
-    samples, labels = load_and_clean_data(data_path, options, ROWS)
+    samples, labels = load_and_clean_data(TRAIN_PATH, options, ROWS)
     corpus = label_reviews(samples, label_type="REVIEW")
     return corpus
 

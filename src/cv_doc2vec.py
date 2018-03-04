@@ -2,6 +2,7 @@ import os
 import multiprocessing
 import numpy as np
 
+from definitions import TRAIN_PATH
 from data.preprocessor import Options
 from data.loader import load_and_clean_data
 from train_doc2vec_model import label_reviews
@@ -17,9 +18,6 @@ from sklearn.model_selection import train_test_split
 
 from collections import OrderedDict
 from collections import defaultdict
-
-current_filepath = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.path.abspath(os.path.join(current_filepath, os.pardir))
 
 WORKERS = multiprocessing.cpu_count()
 ROWS = 30000
@@ -170,8 +168,6 @@ def print_results(results, save=False):
 
 
 if __name__ == "__main__":
-    data_path = os.path.join(ROOT_PATH, "dataset/data_all.csv")
-
     options = set([
         Options.EMOTICONS,
         Options.EMAILS,
@@ -179,7 +175,7 @@ if __name__ == "__main__":
         Options.REPEATING_VOWELS,
     ])
 
-    samples, labels = load_and_clean_data(data_path, options, ROWS)
+    samples, labels = load_and_clean_data(TRAIN_PATH, options, ROWS)
 
     results = cross_validate(samples, labels)
 

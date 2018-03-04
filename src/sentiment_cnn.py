@@ -4,6 +4,9 @@ import time
 import pickle
 import argparse
 
+from definitions import ROOT_PATH
+from definitions import TRAIN_PATH
+from definitions import TEST_PATH
 from data.loader import load_and_clean_data
 from word_based_cnn import WordBasedCNN
 
@@ -11,9 +14,6 @@ from sklearn.model_selection import train_test_split
 
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-
-current_filepath = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.path.abspath(os.path.join(current_filepath, os.pardir))
 
 ROWS = None  # Pandas loads all reviews (~3.6M)
 
@@ -90,8 +90,7 @@ if __name__ == "__main__":
         print("\n-- Training model\n")
         print("\n-- Loading train data --")
 
-        train_data_path = os.path.join(ROOT_PATH, "dataset/train.csv")
-        train_samples, train_labels = load_and_clean_data(path=train_data_path,
+        train_samples, train_labels = load_and_clean_data(path=TRAIN_PATH,
                                                           nrows=args.rows)
         print("\n-- Found {} training samples".format(len(train_samples)))
 
@@ -121,8 +120,7 @@ if __name__ == "__main__":
         print("\n-- Evaluating model --\n")
         print("-- Loading test data")
 
-        test_data_path = os.path.join(ROOT_PATH, "dataset/test.csv")
-        test_samples, test_labels = load_and_clean_data(path=test_data_path)
+        test_samples, test_labels = load_and_clean_data(path=TEST_PATH)
 
         print("\n-- Found {} test samples\n".format(len(test_samples)))
 

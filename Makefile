@@ -8,8 +8,7 @@ GLOVE = $(EXTERNAL_DATA)/glove.840B.300d.zip
 TRAIN = $(PROCESSED_DATA)/train.csv
 TEST = $(PROCESSED_DATA)/test.csv
 
-DATA = $(AMAZON_REVIEWS) \
-			 $(GLOVE)
+DATA = $(AMAZON_REVIEWS) $(GLOVE)
 
 .PHONY: all data process clean
 
