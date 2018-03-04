@@ -1,11 +1,12 @@
+dask[complete]==0.17.0
+gensim==3.3.0
+keras==2.1.4
+langdetect==1.0.7
 nltk==3.2.5
-scikit-learn==0.19.1
 pandas==0.22.0
 pipe==1.4.2
 pyenchant==2.0.0
+scikit-learn==0.19.1
 tensorflow==1.5.0
-keras==2.1.4
-dask[complete]==0.17.0
-texttable==1.2.1
 testfixtures==5.4.0
-gensim==3.3.0
+texttable==1.2.1
