@@ -18,6 +18,7 @@ DATA = $(AMAZON_REVIEWS) $(GLOVE) $(WORD2VEC)
 all: data process
 
 data: $(DATA)
+	gunzip -v models/tokenizer.pkl.gz
 
 process: $(TRAIN) $(TEST) src/data/remove_spam.py
 	src/data/remove_spam.py $(TRAIN) $(TEST)

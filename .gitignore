@@ -115,3 +115,7 @@ data/__pycache__/
 **/*.npy
 **/*.hdf5
 **/*.pkl
+
+# Except pretrained CNN
+!models/cnn_weights.hdf5
+!models/tokenizer.pkl.gz
