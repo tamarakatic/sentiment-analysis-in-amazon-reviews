@@ -105,6 +105,7 @@ data/__pycache__/
 
 # Datasets
 **/*.txt
+**/*.bin
 **/*.zip
 **/*.gz
 **/*.csv

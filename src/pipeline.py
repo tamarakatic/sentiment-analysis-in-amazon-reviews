@@ -2,6 +2,7 @@ import os
 
 from definitions import ROOT_PATH
 from definitions import GLOVE_PATH
+from definitions import WORD2VEC_PATH
 
 from gensim.models import Doc2Vec
 
@@ -9,41 +10,21 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from word_embedding import MeanEmbeddingVectorizer
-from word_embedding import TfidfEmbeddingVectorizer
-from word_embedding import Doc2VecVectorizer
-from word_embedding.embedding_loader import loading_embedding_dataset
+from data.loader import load_word2vec_embedding_matrix
+from data.loader import load_glove_embedding_matrix
+
+from vectorizers import MeanEmbeddingVectorizer
+from vectorizers import TfidfMeanEmbeddingVectorizer
+from vectorizers import Doc2VecVectorizer
 
 
 def bag_of_words(classifier, tf_idf=True):
     if tf_idf:
-        steps = [('vect', TfidfVectorizer())]
+        steps = [("vect", TfidfVectorizer())]
     else:
-        steps = [('count', CountVectorizer())]
+        steps = [("count", CountVectorizer())]
 
-    steps.append(('cls', classifier))
-    return Pipeline(steps)
-
-
-def glove_mean_vectorizer(classifier, word2vec=None):
-    if word2vec:
-        embedding = word2vec
-    else:
-        embedding = loading_embedding_dataset(GLOVE_PATH)
-
-    steps = [('vect', MeanEmbeddingVectorizer(embedding))]
-    steps.append(('cls', classifier))
-    return Pipeline(steps)
-
-
-def glove_tfidf_vectorizer(classifier, word2vec=None):
-    if word2vec:
-        embedding = word2vec
-    else:
-        embedding = loading_embedding_dataset(GLOVE_PATH)
-
-    steps = [('vect', TfidfEmbeddingVectorizer(embedding))]
-    steps.append(('cls', classifier))
+    steps.append(("cls", classifier))
     return Pipeline(steps)
 
 
@@ -53,8 +34,28 @@ def doc2vec(classifier):
     model = Doc2Vec.load(model_path)
 
     steps = [
-        ('vect', Doc2VecVectorizer(model)),
-        ('cls', classifier)
+        ("vect", Doc2VecVectorizer(model)),
+        ("cls", classifier)
     ]
 
+    return Pipeline(steps)
+
+
+def glove_mean_embedding(classifier, tf_idf=False):
+    embedding_matrix = load_glove_embedding_matrix(GLOVE_PATH)
+    return mean_embedding(classifier, embedding_matrix, tf_idf)
+
+
+def word2vec_mean_embedding(classifier, tf_idf=False):
+    embedding_matrix = load_word2vec_embedding_matrix(WORD2VEC_PATH)
+    return mean_embedding(classifier, embedding_matrix, tf_idf)
+
+
+def mean_embedding(classifier, embedding_matrix, tf_idf=False):
+    if tf_idf:
+        steps = [("vect", TfidfMeanEmbeddingVectorizer(embedding_matrix))]
+    else:
+        steps = [("vect", MeanEmbeddingVectorizer(embedding_matrix))]
+
+    steps.append(("cls", classifier))
     return Pipeline(steps)

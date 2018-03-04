@@ -1,46 +1,28 @@
-import os
 import numpy as np
 
-from sklearn.model_selection import train_test_split
+from definitions import GLOVE_PATH
+from definitions import TRAIN_PATH
 
-from data.embedding_loader import loading_embedding_dataset
-from data.loader import load_data
-from data.loader import clean_data
-from data.preprocessor import Options
+from data.loader import load_and_clean_data
+from data.loader import load_glove_embedding_matrix
+
 from word_embedding_based_cnn import WordEmbeddingBasedCNN
 
+from sklearn.model_selection import train_test_split
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
-current_filepath = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.path.abspath(os.path.join(current_filepath, os.pardir))
-
-ROWS = 500000
+ROWS = 50000
 MAX_NUM_WORDS = 30000
 MAX_SEQUENCE_LENGTH = 400
-VAlIDATION_SPLIT = 0.05
+VAL_SPLIT = 0.05
 EMBEDDING_DIM = 300
 
 
 def load_glove_dataset():
-    embedding_index = loading_embedding_dataset(os.path.join(ROOT_PATH,
-                                                'dataset/glove.840B.300d.txt'))
-    print('Found {} word vectors.'.format(len(embedding_index)))
+    embedding_index = load_glove_embedding_matrix(GLOVE_PATH)
+    print("Found {} word vectors.".format(len(embedding_index)))
     return embedding_index
-
-
-def load_and_clean_data():
-    data_path = os.path.join(ROOT_PATH, 'dataset/data_all.csv')
-    data = load_data(path=data_path, rows=ROWS)
-
-    options = Options.all()
-    options.remove(Options.STEMMER)
-    options.remove(Options.LEMMATIZER)
-    options.remove(Options.SPELLING)
-    options.remove(Options.STOPWORDS)
-    options.remove(Options.NEGATIVE_CONSTRUCTS)
-
-    return clean_data(data, options)
 
 
 def find_tokens(texts):
@@ -64,7 +46,7 @@ def prepare_embedding_matrix(num_words, word_index):
 
 
 if __name__ == "__main__":
-    texts, labels = load_and_clean_data()
+    texts, labels = load_and_clean_data(TRAIN_PATH, nrows=ROWS)
     tokenizer = find_tokens(texts)
 
     sequences = tokenizer.texts_to_sequences(texts)
@@ -83,10 +65,10 @@ if __name__ == "__main__":
                                   max_seq_length=MAX_SEQUENCE_LENGTH)
 
     x_train, x_val, y_train, y_val = train_test_split(data, labels,
-                                                      test_size=VAlIDATION_SPLIT)
+                                                      test_size=VAL_SPLIT)
 
     print("Training model...")
     train_model = model.train_convnet_model(x_train, y_train, x_val, y_val)
 
     print("Save model...")
-    train_model.model.save_weights('weights.hdf5')
+    train_model.model.save_weights("weights.hdf5")
