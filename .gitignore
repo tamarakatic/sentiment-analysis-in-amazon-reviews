@@ -106,9 +106,10 @@ data/__pycache__/
 # Datasets
 **/*.txt
 **/*.zip
+**/*.gz
+**/*.csv
 
 # Ignore saved models
-**/*.csv
 **/*.model
 **/*.npy
 **/*.hdf5
