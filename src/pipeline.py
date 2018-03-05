@@ -9,6 +9,7 @@ from gensim.models import Doc2Vec
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 
 from data.loader import load_word2vec_embedding_matrix
 from data.loader import load_glove_embedding_matrix
@@ -28,7 +29,7 @@ def bag_of_words(classifier, tf_idf=True):
     return Pipeline(steps)
 
 
-def doc2vec(classifier):
+def doc2vec(classifier=LogisticRegression()):
     model_filename = "models/doc2vec.model"
     model_path = os.path.join(ROOT_PATH, model_filename)
     model = Doc2Vec.load(model_path)
@@ -41,12 +42,12 @@ def doc2vec(classifier):
     return Pipeline(steps)
 
 
-def glove_mean_embedding(classifier, tf_idf=False):
+def glove_mean_embedding(classifier=LogisticRegression(), tf_idf=False):
     embedding_matrix = load_glove_embedding_matrix(GLOVE_PATH)
     return mean_embedding(classifier, embedding_matrix, tf_idf)
 
 
-def word2vec_mean_embedding(classifier, tf_idf=False):
+def word2vec_mean_embedding(classifier=LogisticRegression(), tf_idf=False):
     embedding_matrix = load_word2vec_embedding_matrix(WORD2VEC_PATH)
     return mean_embedding(classifier, embedding_matrix, tf_idf)
 

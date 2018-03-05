@@ -1,80 +1,96 @@
 import pipeline
 import multiprocessing
 
+from colorama import init as init_colorama
+from colorama import Fore
+
+from timeit import default_timer as timer
+
 from definitions import TRAIN_PATH
 
 from data.preprocessor import Options
 from data.loader import load_and_clean_data
-from data.loader import load_word2vec_embedding_matrix
-from data.loader import load_glove_embedding_matrix
 
-from sklearn.linear_model import LogisticRegression
+from sklearn import metrics
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 from sklearn.svm import LinearSVC
-from sklearn.naive_bayes import MultinomialNB, BernoulliNB
-from sklearn.ensemble import ExtraTreesClassifier
-
-from gensim.models.word2vec import Word2Vec
-from gensim.models.keyedvectors import KeyedVectors
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
 
 ROWS = 50000
 WORKERS = multiprocessing.cpu_count()
 
-if __name__ == "__main__":
+init_colorama()
 
-    options = Options.all()
-    options.remove(Options.STEMMER)
-    options.remove(Options.SPELLING)
-    options.remove(Options.STOPWORDS)
 
-    samples, labels = load_and_clean_data(TRAIN_PATH, options, ROWS)
+def color_text(text, color):
+    return color + text + Fore.RESET
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        samples, labels, test_size=0.2, random_state=42
+
+def embedding_pipelines():
+    yield ("Doc2Vec", pipeline.doc2vec())
+    yield ("Word2Vec", pipeline.word2vec_mean_embedding())
+    yield ("GloVe", pipeline.glove_mean_embedding())
+
+
+def bag_of_words_pipelines():
+    log_regression = pipeline.bag_of_words(
+        classifier=LogisticRegression(C=10.0),
     )
 
-    bow_log_regression_tfidf = pipeline.bag_of_words(
-        classifier=LogisticRegression(),
+    log_regression_tfidf = pipeline.bag_of_words(
+        classifier=LogisticRegression(C=10.0),
         tf_idf=True
     )
 
-    bow_linear_svc_tfidf = pipeline.bag_of_words(
+    linear_svc = pipeline.bag_of_words(
+        classifier=LinearSVC(),
+    )
+
+    linear_svc_tfidf = pipeline.bag_of_words(
         classifier=LinearSVC(),
         tf_idf=True
     )
 
-    bow_linear_svc_tfidf.set_params(
-        vect__ngram_range=(1, 5),
-        vect__max_features=500000,
-        cls__C=10.0
+    mnb = pipeline.bag_of_words(
+        classifier=MultinomialNB(),
     )
 
-    bow_mnb_tfidf = pipeline.bag_of_words(
+    mnb_tfidf = pipeline.bag_of_words(
         classifier=MultinomialNB(),
         tf_idf=True
     )
 
-    bow_mnb_tfidf.set_params(
-        vect__ngram_range=(1, 5),
-        vect__max_features=500000
-    )
+    pipelines = [
+        ("BoW + LR", log_regression),
+        ("BoW + LR + TFIDF", log_regression_tfidf),
+        ("BoW + SVC", linear_svc),
+        ("BoW + SVC + TFIDF", linear_svc_tfidf),
+        ("BoW + MNB", mnb),
+        ("BoW + MNB + TFIDF", mnb_tfidf),
+    ]
 
-    glove = pipeline.glove_mean_embedding(
-        classifier=LogisticRegression()
-    )
+    for name, pipe in pipelines:
+        pipe.set_params(
+            vect__ngram_range=(1, 5),
+            vect__max_features=500000,
+        )
 
-    word2vec = pipeline.word2vec_mean_embedding(
-        classifier=LogisticRegression(),
-    )
+        yield (name, pipe)
 
-    print("=> Training model...")
-    glove.fit(X_train, y_train)
 
-    print("=> Validating model...")
-    predictions = glove.predict(X_test)
+def evaluate_pipeline(pipeline, X_train, y_train, X_test, y_test):
+    print("-- Training model")
+    start = timer()
 
-    report = classification_report(
+    pipeline.fit(X_train, y_train)
+
+    training_time = timer() - start
+
+    print("-- Validating model")
+    predictions = pipeline.predict(X_test)
+
+    report = metrics.classification_report(
         y_test,
         predictions,
         target_names=["Negative", "Positive"],
@@ -82,3 +98,48 @@ if __name__ == "__main__":
     )
 
     print("\n{}".format(report))
+
+    accuracy = metrics.accuracy_score(y_test, predictions)
+    precision = metrics.precision_score(y_test, predictions)
+    recall = metrics.precision_score(y_test, predictions)
+
+    return accuracy, precision, recall, training_time
+
+
+if __name__ == "__main__":
+    options = (
+        Options.EMAILS,
+        Options.EMOTICONS,
+        Options.LEMMATIZER,
+        Options.PUNCTUATION,
+        Options.REPEATING_VOWELS,
+        Options.STOPWORDS,
+        Options.URLS,
+    )
+
+    samples, labels = load_and_clean_data(TRAIN_PATH, options, ROWS)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        samples, labels, test_size=0.25, random_state=42
+    )
+
+    for name, model in bag_of_words_pipelines():
+        print("\n\n\t\t\t" + color_text(name, color=Fore.GREEN))
+        print("\t\t\t" + "-" * len(name) + "\n")
+
+        accuracy, precision, recall, train_time = evaluate_pipeline(
+            model,
+            X_train, y_train,
+            X_test, y_test
+        )
+
+        print("Training time: {:.2f}s\n".format(train_time))
+
+        print(color_text("Accuracy:  ", color=Fore.GREEN) +
+              color_text("{:.2f}".format(accuracy), color=Fore.RED))
+
+        print(color_text("Precision: ", color=Fore.GREEN) +
+              color_text("{:.2f}".format(precision), color=Fore.RED))
+
+        print(color_text("Recall:    ", color=Fore.GREEN) +
+              color_text("{:.2f}".format(recall), color=Fore.RED))

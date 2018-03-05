@@ -1,6 +1,5 @@
-import os
-import multiprocessing
 import numpy as np
+import multiprocessing
 
 from definitions import TRAIN_PATH
 from data.preprocessor import Options
@@ -13,7 +12,7 @@ from texttable import Texttable
 from gensim.test.test_doc2vec import ConcatenatedDoc2Vec
 from gensim.models import Doc2Vec
 
-from sklearn import linear_model
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
 from collections import OrderedDict
@@ -39,7 +38,7 @@ def infer_vectors(model, corpus, vector_size, steps=3, alpha=0.05):
 def validation_accuracy_for_model(model,
                                   X_train, y_train,
                                   X_val, y_val,
-                                  classifier=linear_model.LogisticRegression()):
+                                  classifier=LogisticRegression()):
 
     vector_size = len(model.docvecs[0])
     train_vecs = infer_vectors(model, X_train, vector_size)
@@ -168,12 +167,12 @@ def print_results(results, save=False):
 
 
 if __name__ == "__main__":
-    options = set([
+    options = (
         Options.EMOTICONS,
         Options.EMAILS,
         Options.URLS,
         Options.REPEATING_VOWELS,
-    ])
+    )
 
     samples, labels = load_and_clean_data(TRAIN_PATH, options, ROWS)
 
