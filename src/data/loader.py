@@ -9,11 +9,11 @@ from gensim.models import KeyedVectors
 
 
 def load_and_clean_data(path, options=(), nrows=None):
-    print("\n=> Loading dataset...")
+    print("\n-- Loading dataset")
     data_frame = pd.read_csv(path, nrows=nrows, header=None)
     data_frame.fillna("", inplace=True)
 
-    print("=> Cleaning dataset...")
+    print("-- Cleaning dataset")
     samples, labels = clean_data(data_frame, options)
 
     return samples, labels

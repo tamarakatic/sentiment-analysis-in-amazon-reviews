@@ -16,11 +16,16 @@ from sklearn import utils
 WORKERS = multiprocessing.cpu_count()
 ROWS = 1000000
 
-EPOCHS = 10
+EPOCHS = 500
+ALPHA = 0.025
+MIN_ALPHA = 0.001
+
+HIERARCHICAL_SOFTMAX = 0
+MIN_COUNT = 2
+NEGATIVE_SAMPLES = 5
+SUBSAMPLE_THRESHOLD = 1e-5
 VECTOR_SIZE = 300
-ALPHA = 0.1
-MIN_COUNT = 3
-SAMPLE = 1e-4
+WINDOW_SIZE = 15
 
 
 def label_reviews(reviews, label_type):
@@ -32,7 +37,7 @@ def label_reviews(reviews, label_type):
 
 
 def train_model(model, corpus, epochs,
-                alpha=0.1, min_alpha=0.001,
+                alpha=ALPHA, min_alpha=MIN_ALPHA,
                 save=True, verbose=False):
 
     if verbose:
@@ -66,6 +71,8 @@ def train_model(model, corpus, epochs,
         print("\n- Training complete in {:.2f}s\n".format(training_time))
 
     if save:
+        model.delete_temporary_training_data(keep_doctags_vectors=False,
+                                             keep_inference=True)
         model_filename = "models/doc2vec.model"
         model_path = os.path.join(ROOT_PATH, model_filename)
         model.save(model_path)
@@ -73,12 +80,13 @@ def train_model(model, corpus, epochs,
 
 
 def create_corpus():
-    options = set([
-        Options.EMOTICONS,
+    options = (
         Options.EMAILS,
-        Options.URLS,
+        Options.EMOTICONS,
+        Options.PUNCTUATION,
         Options.REPEATING_VOWELS,
-    ])
+        Options.URLS,
+    )
 
     samples, labels = load_and_clean_data(TRAIN_PATH, options, ROWS)
     corpus = label_reviews(samples, label_type="REVIEW")
@@ -86,10 +94,13 @@ def create_corpus():
 
 
 def create_model(corpus):
-    model = Doc2Vec(dm=0, negative=5, hs=0,
-                    vector_size=VECTOR_SIZE,
-                    sample=SAMPLE,
+    model = Doc2Vec(dm=0,
+                    hs=HIERARCHICAL_SOFTMAX,
                     min_count=MIN_COUNT,
+                    negative=NEGATIVE_SAMPLES,
+                    sample=SUBSAMPLE_THRESHOLD,
+                    vector_size=VECTOR_SIZE,
+                    window=WINDOW_SIZE,
                     workers=WORKERS)
 
     model.build_vocab(corpus)
