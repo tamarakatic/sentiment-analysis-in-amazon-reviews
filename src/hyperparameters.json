@@ -1,0 +1,26 @@
+{
+  "logistic_regression": {
+    "vect__max_df": 0.75,
+    "vect__ngram_range": [1, 2],
+    "clf__C": 10.0
+  },
+
+  "linear_svm": {
+    "vect__max_df": 0.75,
+    "vect__ngram_range": [1, 2],
+    "clf__loss": "hinge",
+    "clf__C": 1.0
+  },
+
+  "multinomial_nb": {
+    "vect__max_df": 0.75,
+    "vect__ngram_range": [1, 3],
+    "clf__alpha": 1.0
+  },
+
+  "random_forest": {
+    "vect__max_df": 1.0,
+    "vect__ngram_range": [1, 2],
+    "clf__n_estimators": 20
+  }
+}
