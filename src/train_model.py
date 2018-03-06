@@ -17,7 +17,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
 
-ROWS = 50000
+ROWS = 100000
 WORKERS = multiprocessing.cpu_count()
 
 init_colorama()
@@ -28,7 +28,7 @@ def color_text(text, color):
 
 
 def embedding_pipelines():
-    yield ("Doc2Vec", pipeline.doc2vec())
+    # yield ("Doc2Vec", pipeline.doc2vec())
     yield ("Word2Vec", pipeline.word2vec_mean_embedding())
     yield ("GloVe", pipeline.glove_mean_embedding())
 
@@ -102,8 +102,9 @@ def evaluate_pipeline(pipeline, X_train, y_train, X_test, y_test):
     accuracy = metrics.accuracy_score(y_test, predictions)
     precision = metrics.precision_score(y_test, predictions)
     recall = metrics.recall_score(y_test, predictions)
+    f1_score = metrics.f1_score(y_test, predictions)
 
-    return accuracy, precision, recall, training_time
+    return accuracy, precision, recall, f1_score, training_time
 
 
 if __name__ == "__main__":
@@ -127,7 +128,7 @@ if __name__ == "__main__":
         print("\n\n\t\t\t" + color_text(name, color=Fore.GREEN))
         print("\t\t\t" + "-" * len(name) + "\n")
 
-        accuracy, precision, recall, train_time = evaluate_pipeline(
+        accuracy, precision, recall, f1_score, train_time = evaluate_pipeline(
             model,
             X_train, y_train,
             X_test, y_test
@@ -136,10 +137,13 @@ if __name__ == "__main__":
         print("Training time: {:.2f}s\n".format(train_time))
 
         print(color_text("Accuracy:  ", color=Fore.GREEN) +
-              color_text("{:.2f}".format(accuracy), color=Fore.RED))
+              color_text("{:.3f}".format(accuracy), color=Fore.RED))
 
         print(color_text("Precision: ", color=Fore.GREEN) +
-              color_text("{:.2f}".format(precision), color=Fore.RED))
+              color_text("{:.3f}".format(precision), color=Fore.RED))
 
         print(color_text("Recall:    ", color=Fore.GREEN) +
-              color_text("{:.2f}".format(recall), color=Fore.RED))
+              color_text("{:.3f}".format(recall), color=Fore.RED))
+
+        print(color_text("F1-score:  ", color=Fore.GREEN) +
+              color_text("{:.3f}".format(f1_score), color=Fore.RED))
