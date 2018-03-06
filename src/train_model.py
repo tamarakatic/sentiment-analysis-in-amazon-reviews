@@ -101,7 +101,7 @@ def evaluate_pipeline(pipeline, X_train, y_train, X_test, y_test):
 
     accuracy = metrics.accuracy_score(y_test, predictions)
     precision = metrics.precision_score(y_test, predictions)
-    recall = metrics.precision_score(y_test, predictions)
+    recall = metrics.recall_score(y_test, predictions)
 
     return accuracy, precision, recall, training_time
 
