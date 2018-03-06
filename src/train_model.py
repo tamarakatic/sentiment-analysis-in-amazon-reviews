@@ -17,7 +17,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
 
-ROWS = 100000
+ROWS = 50000
 WORKERS = multiprocessing.cpu_count()
 
 init_colorama()
@@ -28,7 +28,7 @@ def color_text(text, color):
 
 
 def embedding_pipelines():
-    # yield ("Doc2Vec", pipeline.doc2vec())
+    yield ("Doc2Vec", pipeline.doc2vec())
     yield ("Word2Vec", pipeline.word2vec_mean_embedding())
     yield ("GloVe", pipeline.glove_mean_embedding())
 
