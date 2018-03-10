@@ -11,9 +11,9 @@ from definitions import WORD2VEC_PATH
 from definitions import TRAIN_PATH
 from definitions import TEST_PATH
 
-from data.loader import load_and_clean_data
-from data.loader import load_glove_embedding_matrix
-from data.loader import load_word2vec_embedding_matrix
+from data.loaders import load_and_clean_data
+from data.loaders import load_glove_embedding_matrix
+from data.loaders import load_word2vec_embedding_matrix
 
 from word_based_cnn import WordBasedCNN
 

@@ -1,6 +1,6 @@
 import os.path
 
-from definitions import ROOT_PATH
+from src.definitions import ROOT_PATH
 
 from keras.layers import Activation
 from keras.layers import Conv1D
