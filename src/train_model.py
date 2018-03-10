@@ -1,4 +1,4 @@
-import pipelines as pipelines
+import pipelines
 import multiprocessing
 
 from colorama import init as init_colorama
