@@ -1,4 +1,4 @@
-import pipeline
+import pipelines as pipelines
 import multiprocessing
 
 from colorama import init as init_colorama
@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 from definitions import TRAIN_PATH
 
 from data.preprocessor import Options
-from data.loader import load_and_clean_data
+from data.loaders import load_and_clean_data
 
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
@@ -28,42 +28,42 @@ def color_text(text, color):
 
 
 def embedding_pipelines():
-    yield ("Doc2Vec", pipeline.doc2vec())
-    yield ("Word2Vec", pipeline.word2vec_mean_embedding())
-    yield ("Word2Vec + TFIDF", pipeline.word2vec_mean_embedding(tf_idf=True))
-    yield ("GloVe", pipeline.glove_mean_embedding())
-    yield ("GloVe + TFIDF", pipeline.glove_mean_embedding(tf_idf=True))
+    yield ("Doc2Vec", pipelines.doc2vec())
+    yield ("Word2Vec", pipelines.word2vec_mean_embedding())
+    yield ("Word2Vec + TFIDF", pipelines.word2vec_mean_embedding(tf_idf=True))
+    yield ("GloVe", pipelines.glove_mean_embedding())
+    yield ("GloVe + TFIDF", pipelines.glove_mean_embedding(tf_idf=True))
 
 
 def bag_of_words_pipelines():
-    log_regression = pipeline.bag_of_words(
+    log_regression = pipelines.bag_of_words(
         classifier=LogisticRegression(C=10.0),
     )
 
-    log_regression_tfidf = pipeline.bag_of_words(
+    log_regression_tfidf = pipelines.bag_of_words(
         classifier=LogisticRegression(C=10.0),
         tf_idf=True
     )
 
-    linear_svc = pipeline.bag_of_words(
+    linear_svc = pipelines.bag_of_words(
         classifier=LinearSVC(),
     )
 
-    linear_svc_tfidf = pipeline.bag_of_words(
+    linear_svc_tfidf = pipelines.bag_of_words(
         classifier=LinearSVC(),
         tf_idf=True
     )
 
-    mnb = pipeline.bag_of_words(
+    mnb = pipelines.bag_of_words(
         classifier=MultinomialNB(),
     )
 
-    mnb_tfidf = pipeline.bag_of_words(
+    mnb_tfidf = pipelines.bag_of_words(
         classifier=MultinomialNB(),
         tf_idf=True
     )
 
-    pipelines = [
+    bow_pipelines = [
         ("BoW + LR", log_regression),
         ("BoW + LR + TFIDF", log_regression_tfidf),
         ("BoW + SVC", linear_svc),
@@ -72,7 +72,7 @@ def bag_of_words_pipelines():
         ("BoW + MNB + TFIDF", mnb_tfidf),
     ]
 
-    for name, pipe in pipelines:
+    for name, pipe in bow_pipelines:
         pipe.set_params(
             vect__ngram_range=(1, 5),
             vect__max_features=500000,

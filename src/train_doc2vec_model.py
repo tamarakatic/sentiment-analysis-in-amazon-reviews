@@ -5,8 +5,9 @@ from timeit import default_timer as timer
 
 from definitions import ROOT_PATH
 from definitions import TRAIN_PATH
+
 from data.preprocessor import Options
-from data.loader import load_and_clean_data
+from data.loaders import load_and_clean_data
 
 from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec

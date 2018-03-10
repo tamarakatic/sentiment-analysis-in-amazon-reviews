@@ -11,8 +11,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
-from data.loader import load_word2vec_embedding_matrix
-from data.loader import load_glove_embedding_matrix
+from data.loaders import load_word2vec_embedding_matrix
+from data.loaders import load_glove_embedding_matrix
 
 from vectorizers import MeanEmbeddingVectorizer
 from vectorizers import TfidfMeanEmbeddingVectorizer

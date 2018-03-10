@@ -2,10 +2,11 @@ import numpy as np
 import multiprocessing
 
 from definitions import TRAIN_PATH
-from data.preprocessor import Options
-from data.loader import load_and_clean_data
 from train_doc2vec_model import label_reviews
 from train_doc2vec_model import train_model
+
+from data.preprocessor import Options
+from data.loaders import load_and_clean_data
 
 from texttable import Texttable
 
