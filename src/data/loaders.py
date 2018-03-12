@@ -1,8 +1,8 @@
+import src.data.preprocessor as preprocessor
 import numpy as np
 import pandas as pd
-import multiprocessing
 import dask.dataframe as dd
-import data.preprocessor as preprocessor
+import multiprocessing
 
 from dask.multiprocessing import get
 from gensim.models import KeyedVectors
