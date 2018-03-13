@@ -17,16 +17,16 @@ from sklearn import utils
 WORKERS = multiprocessing.cpu_count()
 ROWS = 1000000
 
-EPOCHS = 500
+EPOCHS = 250
 ALPHA = 0.025
-MIN_ALPHA = 0.001
+MIN_ALPHA = 0.0001
 
 HIERARCHICAL_SOFTMAX = 0
-MIN_COUNT = 2
+MIN_COUNT = 3
 NEGATIVE_SAMPLES = 5
-SUBSAMPLE_THRESHOLD = 1e-5
+SUBSAMPLE_THRESHOLD = 1e-4
 VECTOR_SIZE = 300
-WINDOW_SIZE = 15
+WINDOW_SIZE = 10
 
 
 def label_reviews(reviews, label_type):
@@ -84,7 +84,6 @@ def create_corpus():
     options = (
         Options.EMAILS,
         Options.EMOTICONS,
-        Options.PUNCTUATION,
         Options.REPEATING_VOWELS,
         Options.URLS,
     )
@@ -96,6 +95,7 @@ def create_corpus():
 
 def create_model(corpus):
     model = Doc2Vec(dm=0,
+                    dbow_words=1,
                     hs=HIERARCHICAL_SOFTMAX,
                     min_count=MIN_COUNT,
                     negative=NEGATIVE_SAMPLES,
