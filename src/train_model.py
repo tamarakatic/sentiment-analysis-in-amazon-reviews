@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import GradientBoostingClassifier
 
 ROWS = 50000
 WORKERS = multiprocessing.cpu_count()
@@ -36,6 +37,14 @@ def embedding_pipelines():
 
 
 def bag_of_words_pipelines():
+    gradent_boosting = pipelines.bag_of_words(
+        classifier=GradientBoostingClassifier(
+            n_estimators=300,
+            learning_rate=0.2,
+            random_state=10
+        )
+    )
+
     log_regression = pipelines.bag_of_words(
         classifier=LogisticRegression(C=10.0),
     )
@@ -64,6 +73,7 @@ def bag_of_words_pipelines():
     )
 
     bow_pipelines = [
+        ("BoW + GB", gradent_boosting)
         ("BoW + LR", log_regression),
         ("BoW + LR + TFIDF", log_regression_tfidf),
         ("BoW + SVC", linear_svc),
