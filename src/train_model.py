@@ -73,7 +73,7 @@ def bag_of_words_pipelines():
     )
 
     bow_pipelines = [
-        ("BoW + GB", gradent_boosting)
+        ("BoW + GB", gradent_boosting),
         ("BoW + LR", log_regression),
         ("BoW + LR + TFIDF", log_regression_tfidf),
         ("BoW + SVC", linear_svc),
