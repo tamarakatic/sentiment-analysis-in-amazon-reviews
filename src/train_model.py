@@ -40,7 +40,7 @@ def embedding_pipelines():
 def bag_of_words_pipelines():
     gradent_boosting = pipelines.bag_of_words(
         classifier=GradientBoostingClassifier(
-            n_estimators=3000,
+            n_estimators=5000,
             learning_rate=0.2,
             random_state=10
         )
