@@ -1,5 +1,4 @@
 import pipelines
-import multiprocessing
 
 from colorama import init as init_colorama
 from colorama import Fore
@@ -20,7 +19,6 @@ from sklearn.ensemble import GradientBoostingClassifier
 
 
 ROWS = 50000
-WORKERS = multiprocessing.cpu_count()
 
 init_colorama()
 
@@ -64,11 +62,11 @@ def bag_of_words_pipelines():
         tf_idf=True
     )
 
-    mnb = pipelines.bag_of_words(
+    multinomial_nb = pipelines.bag_of_words(
         classifier=MultinomialNB(),
     )
 
-    mnb_tfidf = pipelines.bag_of_words(
+    multinomial_nb_tfidf = pipelines.bag_of_words(
         classifier=MultinomialNB(),
         tf_idf=True
     )
@@ -79,8 +77,8 @@ def bag_of_words_pipelines():
         ("BoW + LR + TFIDF", log_regression_tfidf),
         ("BoW + SVC", linear_svc),
         ("BoW + SVC + TFIDF", linear_svc_tfidf),
-        ("BoW + MNB", mnb),
-        ("BoW + MNB + TFIDF", mnb_tfidf),
+        ("BoW + MNB", multinomial_nb),
+        ("BoW + MNB + TFIDF", multinomial_nb_tfidf),
     ]
 
     for name, pipe in bow_pipelines:
