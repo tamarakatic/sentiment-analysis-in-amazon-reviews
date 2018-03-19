@@ -26,7 +26,7 @@ ROWS = None  # Load all reviews (~3.6M)
 
 MAX_NUM_WORDS = 30000
 MAX_SEQUENCE_LENGTH = 400
-EMBEDDING_DIM = 30
+EMBEDDING_DIM = 32
 EPOCHS = 5
 VAL_SIZE = 0.05
 
@@ -106,8 +106,7 @@ def parse_arguments():
     parser.add_argument("--epochs", type=int, default=EPOCHS)
     parser.add_argument("--rows", type=int, default=ROWS)
     parser.add_argument("--words", type=int, default=MAX_NUM_WORDS)
-    parser.add_argument("--sequence_length",
-                        type=int,
+    parser.add_argument("--sequence_length", type=int,
                         default=MAX_SEQUENCE_LENGTH)
     parser.add_argument("--embedding", type=str, default=EMBEDDING_TYPES[0])
     parser.add_argument("--embedding_dim", type=int, default=EMBEDDING_DIM)
@@ -126,13 +125,18 @@ def train(args):
                                                       nrows=args.rows)
     print("\n-- Found {} training samples".format(len(train_samples)))
 
-    train_tokenizer(samples=train_samples, max_words=args.words)
+    # train_tokenizer(samples=train_samples, max_words=args.words)
 
-    if args.save:
-        print("-- Saving tokenizer")
-        tokenizer_path = os.path.join(ROOT_PATH, "models/tokenizer.pkl")
-        with open(tokenizer_path, "wb") as file:
-            pickle.dump(tokenizer, file, protocol=pickle.HIGHEST_PROTOCOL)
+    tokenizer_path = os.path.join(
+        ROOT_PATH, "models/{}".format(args.tokenizer_path))
+
+    load_tokenizer(tokenizer_path)
+
+    # if args.save:
+    #     print("-- Saving tokenizer")
+    #     tokenizer_path = os.path.join(ROOT_PATH, "models/tokenizer.pkl")
+    #     with open(tokenizer_path, "wb") as file:
+    #         pickle.dump(tokenizer, file, protocol=pickle.HIGHEST_PROTOCOL)
 
     train_sequences = reviews_to_sequences(train_samples)
 

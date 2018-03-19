@@ -20,6 +20,7 @@ class WordBasedCNN(object):
                  embedding_matrix=None,
                  trainable_embeddings=True,
                  save_best=False,
+                 kernel_size=None,
                  weights_path=None):
 
         self.max_words = max_words
@@ -29,10 +30,11 @@ class WordBasedCNN(object):
         self.trainable_embeddings = trainable_embeddings
         self.weights_path = weights_path
         self.save_best = save_best
+        self.kernel_size = kernel_size
 
         self.checkpoint_path = os.path.join(
             ROOT_PATH,
-            "models/{}.hdf5".format("cnn_weights")
+            "models/{}.hdf5".format("cnn_weights_adam")
         )
 
         self.model = self._compile_model()
@@ -55,7 +57,7 @@ class WordBasedCNN(object):
             model.load_weights(self.weights_path)
 
         model.compile(loss="binary_crossentropy",
-                      optimizer="rmsprop",
+                      optimizer="adam",
                       metrics=["accuracy"])
         return model
 
@@ -64,7 +66,8 @@ class WordBasedCNN(object):
 
         model.add(self._embedding_layer())
 
-        model.add(Conv1D(filters=256, kernel_size=10, activation="relu"))
+        model.add(
+            Conv1D(filters=256, kernel_size=self.kernel_size, activation="relu"))
         model.add(GlobalMaxPooling1D())
 
         model.add(Dense(units=512, activation="relu"))

@@ -32,6 +32,7 @@ def remove_spam(filename):
 
     # Non-english reviews are spam
     non_spam = df[non_en_indices]
+    non_spam[0] -= 1  # Make sentiment binary. 1 - positive and 0 - negative
 
     print("-- Saving processed file...\n")
     non_spam.to_csv(filename, header=False, index=False)
