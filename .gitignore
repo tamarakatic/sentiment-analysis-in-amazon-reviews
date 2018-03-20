@@ -118,7 +118,7 @@ data/__pycache__/
 
 # Except pretrained CNN
 !models/convnet*.hdf5
-!models/tokenizer.pkl.gz
+!models/tokenizer.pkl
 
 # Except reports
 !reports/**/*.csv

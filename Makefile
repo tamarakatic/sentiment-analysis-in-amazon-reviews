@@ -10,7 +10,6 @@ DOC2VEC = $(MODELS)/doc2vec_dbow_300.tar.gz
 
 TRAIN = $(PROCESSED_DATA)/train.csv
 TEST = $(PROCESSED_DATA)/test.csv
-TOKENIZER = $(MODELS)/tokenizer.pkl
 
 GOOGLE_BUCKET = https://storage.googleapis.com/awesome-public-datasets
 
@@ -24,7 +23,7 @@ install:
 	pip3 install -r requirements.txt
 	pip3 install -e .
 
-data: $(DATA) $(TOKENIZER)
+data: $(DATA)
 
 process: $(TRAIN) $(TEST) src/data/remove_spam.py
 	src/data/remove_spam.py $(TRAIN) $(TEST)
@@ -41,9 +40,6 @@ $(TRAIN): $(AMAZON_REVIEWS)
 $(TEST): $(AMAZON_REVIEWS)
 	tar -C $(PROCESSED_DATA) -xzvf $< amazon_review_polarity_csv/test.csv \
 		--strip-components=1 --touch
-
-$(TOKENIZER): $(MODELS)/tokenizer.pkl.gz
-	gunzip -kvf $<
 
 $(AMAZON_REVIEWS):
 	wget -O $@ $(GOOGLE_BUCKET)/amazon_review_polarity_csv.tar.gz
