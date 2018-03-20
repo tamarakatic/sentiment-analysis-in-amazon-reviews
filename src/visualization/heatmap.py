@@ -15,11 +15,6 @@ MAX_NUM_WORDS = 30000
 MAX_SEQUENCE_LENGTH = 400
 EMBEDDING_DIM = 32
 
-REVIEW = ("Simple, Durable, Fun game for all ages."
-          "This is an AWESOME game!"
-          "Almost everyone know tic-tac-toe so "
-          "it is EASY to learn and quick to play.")
-
 tokenizer_path = os.path.join(ROOT_PATH, "models/tokenizer.pkl")
 weights_path = os.path.join(ROOT_PATH, "models/convnet_adam32.hdf5")
 
