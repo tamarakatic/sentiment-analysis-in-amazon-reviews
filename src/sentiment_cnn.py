@@ -26,7 +26,7 @@ ROWS = None  # Load all reviews (~3.6M)
 
 MAX_NUM_WORDS = 30000
 MAX_SEQUENCE_LENGTH = 400
-EMBEDDING_DIM = 30
+EMBEDDING_DIM = 32
 EPOCHS = 5
 VAL_SIZE = 0.05
 
@@ -36,27 +36,30 @@ EMBEDDING_TYPES = [
     "word2vec"
 ]
 
-tokenizer = None
 
-
-def train_tokenizer(samples, max_words):
+def train_tokenizer(samples, max_words, save=True):
     print("-- Training tokenizer")
-    global tokenizer
     tokenizer = Tokenizer(num_words=max_words)
     tokenizer.fit_on_texts(samples)
+
+    if save:
+        print("-- Saving tokenizer")
+        tokenizer_path = os.path.join(ROOT_PATH, "models/tokenizer.pkl")
+        with open(tokenizer_path, "wb") as file:
+            pickle.dump(tokenizer, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+    return tokenizer
 
 
 def load_tokenizer(tokenizer_path):
     print("-- Loading tokenizer")
     with open(tokenizer_path, "rb") as file:
-        global tokenizer
         tokenizer = pickle.load(file)
+        return tokenizer
 
 
-def reviews_to_sequences(reviews):
+def reviews_to_sequences(reviews, tokenizer):
     print("-- Mapping reviews to sequences\n")
-
-    global tokenizer
     sequences = tokenizer.texts_to_sequences(reviews)
 
     return pad_sequences(sequences,
@@ -102,12 +105,12 @@ def parse_arguments():
     parser.add_argument("--save", action="store_true")
     parser.add_argument("--tokenizer_path", type=str, default="tokenizer.pkl")
     parser.add_argument("--weights_path", type=str)
+    parser.add_argument("--checkpoint_path", type=str)
 
     parser.add_argument("--epochs", type=int, default=EPOCHS)
     parser.add_argument("--rows", type=int, default=ROWS)
     parser.add_argument("--words", type=int, default=MAX_NUM_WORDS)
-    parser.add_argument("--sequence_length",
-                        type=int,
+    parser.add_argument("--sequence_length", type=int,
                         default=MAX_SEQUENCE_LENGTH)
     parser.add_argument("--embedding", type=str, default=EMBEDDING_TYPES[0])
     parser.add_argument("--embedding_dim", type=int, default=EMBEDDING_DIM)
@@ -126,15 +129,11 @@ def train(args):
                                                       nrows=args.rows)
     print("\n-- Found {} training samples".format(len(train_samples)))
 
-    train_tokenizer(samples=train_samples, max_words=args.words)
+    tokenizer_path = os.path.join(
+        ROOT_PATH, "models/{}".format(args.tokenizer_path))
 
-    if args.save:
-        print("-- Saving tokenizer")
-        tokenizer_path = os.path.join(ROOT_PATH, "models/tokenizer.pkl")
-        with open(tokenizer_path, "wb") as file:
-            pickle.dump(tokenizer, file, protocol=pickle.HIGHEST_PROTOCOL)
-
-    train_sequences = reviews_to_sequences(train_samples)
+    tokenizer = load_tokenizer(tokenizer_path)
+    train_sequences = reviews_to_sequences(train_samples, tokenizer)
 
     X_train, X_val, y_train, y_val = train_test_split(
         train_sequences, train_labels, test_size=args.val_size
@@ -152,8 +151,7 @@ def train(args):
                          embedding_matrix=embedding,
                          trainable_embeddings=args.trainable_embeddings,
                          save_best=args.save,
-                         weights_path=os.path.join(
-                             ROOT_PATH, "models/{}".format(args.weights_path)))
+                         checkpoint_path=args.checkpoint_path)
 
     training = model.fit(X_train, y_train,
                          X_val, y_val,
@@ -179,7 +177,7 @@ def evaluate(args):
         ROOT_PATH, "models/{}".format(args.tokenizer_path))
 
     if tokenizer_path is not None and os.path.isfile(tokenizer_path):
-        load_tokenizer(tokenizer_path)
+        tokenizer = load_tokenizer(tokenizer_path)
     else:
         print("\n-- [ERROR] Failed to load tokenizer\n")
         sys.exit(0)
@@ -187,15 +185,13 @@ def evaluate(args):
     model = WordBasedCNN(max_words=args.words,
                          max_sequence_length=args.sequence_length,
                          embedding_dim=args.embedding_dim,
-                         trainable_embeddings=args.trainable_embeddings,
-                         save_best=args.save,
                          weights_path=os.path.join(
                              ROOT_PATH, "models/{}".format(args.weights_path)))
 
-    test_sequences = reviews_to_sequences(test_samples)
+    test_sequences = reviews_to_sequences(test_samples, tokenizer)
     loss, accuracy = model.evaluate(test_sequences, test_labels)
 
-    print("-- Test loss {:.2f}".format(loss))
+    print("\n-- Test loss {:.4f}".format(loss))
     print("-- Test accuracy {:.4f}".format(accuracy))
 
 
