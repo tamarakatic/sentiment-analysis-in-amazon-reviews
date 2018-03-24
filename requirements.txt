@@ -10,7 +10,7 @@ pandas==0.22.0
 pipe==1.4.2
 pyenchant==2.0.0
 scikit-learn==0.19.1
-tensorflow==1.5.0
 testfixtures==5.4.0
 texttable==1.2.1
 wordcloud==1.4.1
+h5py==2.7.1
