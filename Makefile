@@ -22,6 +22,8 @@ all: install data process
 install:
 	pip3 install -r requirements.txt
 	pip3 install -e .
+	python3 -m nltk.downloader stopwords
+	python3 -m nltk.downloader wordnet
 
 data: $(DATA)
 
