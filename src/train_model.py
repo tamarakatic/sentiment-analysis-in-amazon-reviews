@@ -1,4 +1,5 @@
 import pipelines
+import argparse
 
 from colorama import init as init_colorama
 from colorama import Fore
@@ -35,7 +36,7 @@ def embedding_pipelines():
     yield ("GloVe + TFIDF", pipelines.glove_mean_embedding(tf_idf=True))
 
 
-def bag_of_words_pipelines():
+def gradient_boosting_pipeline():
     gradent_boosting = pipelines.bag_of_words(
         classifier=GradientBoostingClassifier(
             n_estimators=5000,
@@ -44,6 +45,15 @@ def bag_of_words_pipelines():
         )
     )
 
+    gradent_boosting.set_params(
+        vect__ngram_range=(1, 5),
+        vect__max_features=500000,
+    )
+
+    return [("BoW + GB", gradent_boosting)]
+
+
+def bag_of_words_pipelines():
     log_regression = pipelines.bag_of_words(
         classifier=LogisticRegression(C=10.0),
     )
@@ -72,7 +82,6 @@ def bag_of_words_pipelines():
     )
 
     bow_pipelines = [
-        ("BoW + GB", gradent_boosting),
         ("BoW + LR", log_regression),
         ("BoW + LR + TFIDF", log_regression_tfidf),
         ("BoW + SVC", linear_svc),
@@ -118,7 +127,7 @@ def evaluate_pipeline(pipeline, X_train, y_train, X_test, y_test):
     return accuracy, precision, recall, f1_score, training_time
 
 
-if __name__ == "__main__":
+def main(model_pipelines):
     options = (
         Options.EMAILS,
         Options.EMOTICONS,
@@ -135,7 +144,7 @@ if __name__ == "__main__":
         samples, labels, test_size=0.25, random_state=42
     )
 
-    for name, model in bag_of_words_pipelines():
+    for name, model in model_pipelines:
         print("\n\n\t\t\t" + color_text(name, color=Fore.GREEN))
         print("\t\t\t" + "-" * len(name) + "\n")
 
@@ -158,3 +167,23 @@ if __name__ == "__main__":
 
         print(color_text("F1-score:  ", color=Fore.GREEN) +
               color_text("{:.3f}".format(f1_score), color=Fore.RED))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Train and evaluate sentiment classification models."
+    )
+
+    parser.add_argument("--model", type=str, default="bow")
+    args = parser.parse_args()
+
+    if args.model == "bow":
+        model_pipelines = bag_of_words_pipelines()
+    elif args.model == "gb":
+        model_pipelines = gradient_boosting_pipeline()
+    elif args.model == "embedding":
+        model_pipelines = embedding_pipelines()
+    else:
+        raise Exception("Invalid classification model type")
+
+    main(model_pipelines)
