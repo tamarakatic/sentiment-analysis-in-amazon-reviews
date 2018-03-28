@@ -76,19 +76,19 @@ You can run traditional models (e.g. n-grams + Logistic Regression) or pretraine
 
 ### Traditional models
 
-Run bag of words models (Logistic Regression, Linear SVM and Multinomial Naive Bayes):
+Run `bag of words` models (Logistic Regression, Linear SVM and Multinomial Naive Bayes):
 
 ```bash
 python3 src/train_models.py --model=bow
 ```
 
-Run ngrams + Gradient Boosting Classifier (because it takes a lot of time):
+Run `ngrams + Gradient Boosting Classifier` (training takes a lot of time):
 
 ```bash
 python3 src/train_models.py --model=gb
 ```
 
-Run pretrained embeddings + Logistic Regression (Doc2Vec, Word2Vec and GloVe):
+Run `pretrained embeddings + Logistic Regression` (Doc2Vec, Word2Vec and GloVe):
 
 ```bash
 python3 src/train_models.py --model=embedding
@@ -105,7 +105,7 @@ Choose one of these examples:
 1) To evaluate pretrained ConvNet with Keras embedding run:
 
 ```bash
-python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_adam32.hdf5
+python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_keras.hdf5
 ```
 
 2) To evaluate pretrained ConvNet with GloVe embedding run:
@@ -128,7 +128,7 @@ python3 src/deep_sentiment.py --test --lstm --weights_path=convnet_lstm.hdf5
 
 #### ConvNet Ensamble
 
-To form ensamble of ConvNets and get 1-2% more accuracy on test set run:
+To form ensamble of ConvNets and get ~1% more accuracy on test set run:
 
 ```bash
 python3 src/convnet_ensamble.py

@@ -35,7 +35,7 @@ test_sequences_lstm = pad_sequences(sequences,
 
 # Each tuple is in format (weights_path, embedding dimension, kernel size)
 model_params = [
-    ("convnet_adam32", 32, 5),
+    ("convnet_keras", 32, 5),
     ("convnet_lstm", 32, 5),
     ("convnet_glove", 300, 5),
     ("convnet_word2vec", 300, 10)
