@@ -15,21 +15,19 @@ from data.loaders import load_and_clean_data
 from data.loaders import load_glove_embedding_matrix
 from data.loaders import load_word2vec_embedding_matrix
 
-from word_based_cnn import WordBasedCNN
-from lstm import WordLSTM
-
-from sklearn.model_selection import train_test_split
+from deep_word_models import ConvNet
+from deep_word_models import ConvNetLSTM
 
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 
 ROWS = None  # Load all reviews (~3.6M)
-
+EPOCHS = 5
+VAL_SPLIT = 0.05
+BATCH_SIZE = 128
+EMBEDDING_DIM = 32
 MAX_NUM_WORDS = 30000
 MAX_SEQUENCE_LENGTH = 400
-EMBEDDING_DIM = 32
-EPOCHS = 5
-VAL_SIZE = 0.05
 
 EMBEDDING_TYPES = [
     "keras",
@@ -53,17 +51,19 @@ def train_tokenizer(samples, max_words, save=True):
 
 
 def load_tokenizer(tokenizer_path):
-    print("-- Loading tokenizer")
+    print("\n-- Loading tokenizer")
     with open(tokenizer_path, "rb") as file:
         tokenizer = pickle.load(file)
         return tokenizer
 
 
-def reviews_to_sequences(reviews, tokenizer):
+def reviews_to_sequences(reviews, tokenizer, padding="post"):
     print("-- Mapping reviews to sequences\n")
     sequences = tokenizer.texts_to_sequences(reviews)
 
-    return pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH)
+    return pad_sequences(sequences,
+                         maxlen=MAX_SEQUENCE_LENGTH,
+                         padding=padding)
 
 
 def embedding_matrix(embedding_type="keras",
@@ -95,81 +95,117 @@ def embedding_matrix(embedding_type="keras",
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Train word-based CNN")
-    group = parser.add_mutually_exclusive_group()
+    parser = argparse.ArgumentParser()
+    mode_group = parser.add_mutually_exclusive_group()
 
-    group.add_argument("--train", action="store_true")
-    group.add_argument("--eval", action="store_true")
+    mode_group.add_argument("--train", action="store_true")
+    mode_group.add_argument("--test", action="store_true")
+
+    model_group = parser.add_mutually_exclusive_group()
+    model_group.add_argument("--convnet", action="store_true")
+    model_group.add_argument("--lstm", action="store_true")
 
     parser.add_argument("--save", action="store_true")
-    parser.add_argument("--tokenizer_path", type=str, default="tokenizer.pkl")
     parser.add_argument("--weights_path", type=str)
     parser.add_argument("--checkpoint_path", type=str)
+    parser.add_argument("--tokenizer_path", type=str, default="tokenizer.pkl")
 
-    parser.add_argument("--epochs", type=int, default=EPOCHS)
     parser.add_argument("--rows", type=int, default=ROWS)
     parser.add_argument("--words", type=int, default=MAX_NUM_WORDS)
-    parser.add_argument("--sequence_length", type=int,
-                        default=MAX_SEQUENCE_LENGTH)
+    parser.add_argument("--epochs", type=int, default=EPOCHS)
+    parser.add_argument("--batch_size", type=int, default=BATCH_SIZE)
+    parser.add_argument("--val_split", type=float, default=VAL_SPLIT)
+
     parser.add_argument("--embedding", type=str, default=EMBEDDING_TYPES[0])
     parser.add_argument("--embedding_dim", type=int, default=EMBEDDING_DIM)
     parser.add_argument("--trainable_embeddings", action="store_true")
-    parser.add_argument("--val_size", type=float, default=VAL_SIZE)
+    parser.add_argument("--sequence_length", type=int,
+                        default=MAX_SEQUENCE_LENGTH)
 
     return parser.parse_args()
 
 
-def train(args):
-    print("\n-- Training model --\n")
-    print("-- Loading train data --")
+def train(tokenizer, args):
+    print("-- Loading train data")
     timestamp = int(time.time())
 
     train_samples, train_labels = load_and_clean_data(path=TRAIN_PATH,
                                                       nrows=args.rows)
-    print("\n-- Found {} training samples".format(len(train_samples)))
+    print("-- Found {} training samples".format(len(train_samples)))
 
-    tokenizer_path = os.path.join(
-        ROOT_PATH, "models/{}".format(args.tokenizer_path))
-
-    tokenizer = load_tokenizer(tokenizer_path)
-    train_sequences = reviews_to_sequences(train_samples, tokenizer)
-
-    X_train, X_val, y_train, y_val = train_test_split(
-        train_sequences, train_labels, test_size=args.val_size
-    )
+    padding = "pre" if args.lstm else "post"
+    train_samples = reviews_to_sequences(train_samples, tokenizer, padding)
 
     num_words = min(args.words, len(tokenizer.word_index))
     embedding = embedding_matrix(embedding_type=args.embedding,
                                  dim=args.embedding_dim,
                                  num_words=num_words,
                                  word_index=tokenizer.word_index)
-    model = WordLSTM(max_words=args.words,
-                     max_sequence_length=args.sequence_length,
-                     embedding_dim=args.embedding_dim,
-                     embedding_matrix=embedding,
-                     trainable_embeddings=args.trainable_embeddings,
-                     save_best=args.save,
-                     checkpoint_path=args.checkpoint_path)
 
-    training = model.fit(X_train, y_train,
-                         X_val, y_val,
-                         epochs=args.epochs)
+    model_arguments = {
+        "max_words": args.words,
+        "max_sequence_length": args.sequence_length,
+        "embedding_dim": args.embedding_dim,
+        "embedding_matrix": embedding,
+        "trainable_embeddings": args.trainable_embeddings,
+        "save_best": args.save,
+        "checkpoint_path": args.checkpoint_path
+    }
+
+    if args.lstm:
+        model = ConvNetLSTM(**model_arguments)
+    else:
+        model = ConvNet(**model_arguments)
+
+    training_data = model.fit(train_samples, train_labels,
+                              batch_size=args.batch_size,
+                              validation_split=args.val_split,
+                              epochs=args.epochs)
 
     if args.save:
         print("\n-- Saving training history")
         history_filepath = "train_history_{}.pkl".format(timestamp)
         with open(history_filepath, "wb") as file:
-            pickle.dump(training.history, file,
+            pickle.dump(training_data.history, file,
                         protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def evaluate(args):
-    print("\n-- Evaluating model --\n")
+def test(tokenizer, args):
+    print("-- Evaluating model")
     print("-- Loading test data")
 
     test_samples, test_labels = load_and_clean_data(path=TEST_PATH)
 
-    print("\n-- Found {} test samples\n".format(len(test_samples)))
+    print("-- Found {} test samples".format(len(test_samples)))
+
+    padding = "pre" if args.lstm else "post"
+    test_samples = reviews_to_sequences(test_samples, tokenizer, padding)
+
+    weights_path = os.path.join(
+        ROOT_PATH, "models/{}".format(args.weights_path))
+
+    model_arguments = {
+        "max_words": args.words,
+        "max_sequence_length": args.sequence_length,
+        "embedding_dim": args.embedding_dim,
+        "weights_path": weights_path
+    }
+
+    if args.lstm:
+        model = ConvNetLSTM(**model_arguments)
+    else:
+        model = ConvNet(**model_arguments)
+
+    loss, accuracy = model.evaluate(test_samples, test_labels,
+                                    verbose=1,
+                                    batch_size=args.batch_size)
+
+    print("\n-- Test loss {:.4f}".format(loss))
+    print("-- Test accuracy {:.4f}".format(accuracy))
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
 
     tokenizer_path = os.path.join(
         ROOT_PATH, "models/{}".format(args.tokenizer_path))
@@ -180,24 +216,8 @@ def evaluate(args):
         print("\n-- [ERROR] Failed to load tokenizer\n")
         sys.exit(0)
 
-    model = WordLSTM(max_words=args.words,
-                     max_sequence_length=args.sequence_length,
-                     embedding_dim=args.embedding_dim,
-                     weights_path=os.path.join(
-                         ROOT_PATH, "models/{}".format(args.weights_path)))
-
-    test_sequences = reviews_to_sequences(test_samples, tokenizer)
-    loss, accuracy = model.evaluate(test_sequences, test_labels)
-
-    print("\n-- Test loss {:.4f}".format(loss))
-    print("-- Test accuracy {:.4f}".format(accuracy))
-
-
-if __name__ == "__main__":
-    args = parse_arguments()
-
     if args.train:
-        train(args)
+        train(tokenizer, args)
 
-    if args.eval:
-        evaluate(args)
+    if args.test:
+        test(tokenizer, args)
