@@ -16,6 +16,7 @@ from data.loaders import load_glove_embedding_matrix
 from data.loaders import load_word2vec_embedding_matrix
 
 from word_based_cnn import WordBasedCNN
+from lstm import WordLSTM
 
 from sklearn.model_selection import train_test_split
 
@@ -62,9 +63,7 @@ def reviews_to_sequences(reviews, tokenizer):
     print("-- Mapping reviews to sequences\n")
     sequences = tokenizer.texts_to_sequences(reviews)
 
-    return pad_sequences(sequences,
-                         maxlen=MAX_SEQUENCE_LENGTH,
-                         padding="post")
+    return pad_sequences(sequences, maxlen=MAX_SEQUENCE_LENGTH)
 
 
 def embedding_matrix(embedding_type="keras",
@@ -144,14 +143,13 @@ def train(args):
                                  dim=args.embedding_dim,
                                  num_words=num_words,
                                  word_index=tokenizer.word_index)
-
-    model = WordBasedCNN(max_words=args.words,
-                         max_sequence_length=args.sequence_length,
-                         embedding_dim=args.embedding_dim,
-                         embedding_matrix=embedding,
-                         trainable_embeddings=args.trainable_embeddings,
-                         save_best=args.save,
-                         checkpoint_path=args.checkpoint_path)
+    model = WordLSTM(max_words=args.words,
+                     max_sequence_length=args.sequence_length,
+                     embedding_dim=args.embedding_dim,
+                     embedding_matrix=embedding,
+                     trainable_embeddings=args.trainable_embeddings,
+                     save_best=args.save,
+                     checkpoint_path=args.checkpoint_path)
 
     training = model.fit(X_train, y_train,
                          X_val, y_val,
@@ -182,11 +180,11 @@ def evaluate(args):
         print("\n-- [ERROR] Failed to load tokenizer\n")
         sys.exit(0)
 
-    model = WordBasedCNN(max_words=args.words,
-                         max_sequence_length=args.sequence_length,
-                         embedding_dim=args.embedding_dim,
-                         weights_path=os.path.join(
-                             ROOT_PATH, "models/{}".format(args.weights_path)))
+    model = WordLSTM(max_words=args.words,
+                     max_sequence_length=args.sequence_length,
+                     embedding_dim=args.embedding_dim,
+                     weights_path=os.path.join(
+                         ROOT_PATH, "models/{}".format(args.weights_path)))
 
     test_sequences = reviews_to_sequences(test_samples, tokenizer)
     loss, accuracy = model.evaluate(test_sequences, test_labels)
