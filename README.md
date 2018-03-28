@@ -8,11 +8,11 @@ These instructions will help you to set up your environment and run examples on 
 
 ### Prerequisites
 
-* git
-* make
-* python 3.5+
-* pip 3
-* virtualenv
+* `git`
+* `make`
+* `python 3.5+`
+* `pip3`
+* `virtualenv`
 
 ### Installing
 
@@ -105,19 +105,25 @@ Choose one of these examples:
 1) To evaluate pretrained ConvNet with Keras embedding run:
 
 ```bash
-python3 src/sentiment_cnn.py --eval --weights_path=convnet_adam32.hdf5 --embedding=keras --embedding_dim=32
+python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_adam32.hdf5
 ```
 
 2) To evaluate pretrained ConvNet with GloVe embedding run:
 
 ```bash
-python3 src/sentiment_cnn.py --eval --weights_path=convnet_glove.hdf5 --embedding=glove --embedding_dim=300
+python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_glove.hdf5 --embedding=glove --embedding_dim=300
 ```
 
-3) To evaluate pretrained ConvNet with GloVe embedding run:
+3) To evaluate pretrained ConvNet with Word2Vec embedding run:
 
 ```bash
-python3 src/sentiment_cnn.py --eval --weights_path=convnet_word2vec.hdf5 --embedding=word2vec --embedding_dim=300
+python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_word2vec.hdf5 --embedding=word2vec --embedding_dim=300
+```
+
+4) To evaluate pretrained ConvNet + LSTM run:
+
+```bash
+python3 src/deep_sentiment.py --test --lstm --weights_path=convnet_lstm.hdf5
 ```
 
 #### ConvNet Ensamble
