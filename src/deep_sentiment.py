@@ -16,6 +16,7 @@ from data.loaders import load_glove_embedding_matrix
 from data.loaders import load_word2vec_embedding_matrix
 
 from deep_word_models import ConvNet
+from deep_word_models import SimpleLSTM
 from deep_word_models import ConvNetLSTM
 
 from keras.preprocessing.text import Tokenizer
@@ -27,7 +28,7 @@ VAL_SPLIT = 0.05
 BATCH_SIZE = 128
 EMBEDDING_DIM = 32
 MAX_NUM_WORDS = 30000
-MAX_SEQUENCE_LENGTH = 400
+MAX_SEQUENCE_LENGTH = 256
 
 EMBEDDING_TYPES = [
     "keras",
@@ -104,6 +105,7 @@ def parse_arguments():
     model_group = parser.add_mutually_exclusive_group()
     model_group.add_argument("--convnet", action="store_true")
     model_group.add_argument("--lstm", action="store_true")
+    model_group.add_argument("--convnet_lstm", action="store_true")
 
     parser.add_argument("--save", action="store_true")
     parser.add_argument("--weights_path", type=str)
@@ -126,15 +128,8 @@ def parse_arguments():
 
 
 def train(tokenizer, args):
-    print("-- Loading train data")
+    print("-- Training model")
     timestamp = int(time.time())
-
-    train_samples, train_labels = load_and_clean_data(path=TRAIN_PATH,
-                                                      nrows=args.rows)
-    print("-- Found {} training samples".format(len(train_samples)))
-
-    padding = "pre" if args.lstm else "post"
-    train_samples = reviews_to_sequences(train_samples, tokenizer, padding)
 
     num_words = min(args.words, len(tokenizer.word_index))
     embedding = embedding_matrix(embedding_type=args.embedding,
@@ -153,9 +148,21 @@ def train(tokenizer, args):
     }
 
     if args.lstm:
+        model = SimpleLSTM(**model_arguments)
+    elif args.convnet:
+        model = ConvNet(**model_arguments)
+    elif args.convnet_lstm:
         model = ConvNetLSTM(**model_arguments)
     else:
-        model = ConvNet(**model_arguments)
+        print("\nModel must be specified [--convnet, --lstm, --convnet_lstm]")
+        sys.exit(0)
+
+    train_samples, train_labels = load_and_clean_data(path=TRAIN_PATH,
+                                                      nrows=args.rows)
+    print("-- Found {} training samples".format(len(train_samples)))
+
+    padding = "post" if args.convnet else "pre"
+    train_samples = reviews_to_sequences(train_samples, tokenizer, padding)
 
     training_data = model.fit(train_samples, train_labels,
                               batch_size=args.batch_size,
@@ -172,14 +179,6 @@ def train(tokenizer, args):
 
 def test(tokenizer, args):
     print("-- Evaluating model")
-    print("-- Loading test data")
-
-    test_samples, test_labels = load_and_clean_data(path=TEST_PATH)
-
-    print("-- Found {} test samples".format(len(test_samples)))
-
-    padding = "pre" if args.lstm else "post"
-    test_samples = reviews_to_sequences(test_samples, tokenizer, padding)
 
     weights_path = os.path.join(
         ROOT_PATH, "models/{}".format(args.weights_path))
@@ -192,9 +191,20 @@ def test(tokenizer, args):
     }
 
     if args.lstm:
+        model = SimpleLSTM(**model_arguments)
+    elif args.convnet:
+        model = ConvNet(**model_arguments)
+    elif args.convnet_lstm:
         model = ConvNetLSTM(**model_arguments)
     else:
-        model = ConvNet(**model_arguments)
+        print("\nModel must be specified [--convnet, --lstm, --convnet_lstm]")
+        sys.exit(0)
+
+    test_samples, test_labels = load_and_clean_data(path=TEST_PATH)
+    print("-- Found {} test samples".format(len(test_samples)))
+
+    padding = "post" if args.convnet else "pre"
+    test_samples = reviews_to_sequences(test_samples, tokenizer, padding)
 
     loss, accuracy = model.evaluate(test_samples, test_labels,
                                     verbose=1,

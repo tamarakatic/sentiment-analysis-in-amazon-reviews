@@ -115,3 +115,11 @@ class ConvNet(WordBasedModel):
         self.add(Dense(units=512, activation="relu"))
         self.add(Dropout(0.5))
         self.add(Dense(units=1, activation="sigmoid"))
+
+
+class SimpleLSTM(WordBasedModel):
+    LSTM_UNITS = 128
+
+    def add_model_layers(self):
+        self.add(LSTM(units=self.LSTM_UNITS))
+        self.add(Dense(units=1, activation="sigmoid"))

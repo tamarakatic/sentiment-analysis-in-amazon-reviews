@@ -105,31 +105,37 @@ Choose one of these examples:
 1) To evaluate pretrained ConvNet with Keras embedding run:
 
 ```bash
-python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_keras.hdf5
+python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_keras.h5
 ```
 
 2) To evaluate pretrained ConvNet with GloVe embedding run:
 
 ```bash
-python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_glove.hdf5 --embedding=glove --embedding_dim=300
+python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_glove.h5 --embedding=glove --embedding_dim=300
 ```
 
 3) To evaluate pretrained ConvNet with Word2Vec embedding run:
 
 ```bash
-python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_word2vec.hdf5 --embedding=word2vec --embedding_dim=300
+python3 src/deep_sentiment.py --test --convnet --weights_path=convnet_word2vec.h5 --embedding=word2vec --embedding_dim=300
 ```
 
-4) To evaluate pretrained ConvNet + LSTM run:
+4) To evaluate pretrained LSTM run:
 
 ```bash
-python3 src/deep_sentiment.py --test --lstm --weights_path=convnet_lstm.hdf5
+python3 src/deep_sentiment.py --test --lstm --weights_path=lstm.h5
 ```
 
-#### ConvNet Ensamble
-
-To form ensamble of ConvNets and get ~1% more accuracy on test set run:
+5) To evaluate pretrained ConvNet + LSTM run:
 
 ```bash
-python3 src/convnet_ensamble.py
+python3 src/deep_sentiment.py --test --convnet_lstm --weights_path=convnet_lstm.h5
+```
+
+#### Model Ensamble
+
+To form model ensamble and get ~1% more accuracy on test set run:
+
+```bash
+python3 src/model_ensamble.py
 ```
