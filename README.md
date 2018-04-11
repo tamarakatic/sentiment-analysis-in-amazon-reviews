@@ -76,13 +76,19 @@ You can run traditional models (e.g. n-grams + Logistic Regression) or pretraine
 
 ### Traditional models
 
-Run `bag of words` models (Logistic Regression, Linear SVM and Multinomial Naive Bayes):
+Run `bag of words with Logistic Regression`:
 
 ```bash
 python3 src/train_models.py --model=bow
 ```
 
-Run `ngrams + Gradient Boosting Classifier` (training takes a lot of time):
+Run `bag of ngrams` models (Logistic Regression, Linear SVM and Multinomial Naive Bayes):
+
+```bash
+python3 src/train_models.py --model=bon
+```
+
+Run `bag of ngrams + Gradient Boosting Classifier` (training takes a lot of time):
 
 ```bash
 python3 src/train_models.py --model=gb
