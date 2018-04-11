@@ -59,8 +59,7 @@ def bag_of_words_pipeline():
     )
 
     log_regression.set_params(
-        vect__ngram_range=(1, 5),
-        vect__max_features=500000,
+        vect__max_features=50000,
     )
 
     return [("BoW + LR", log_regression)]
