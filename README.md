@@ -76,7 +76,7 @@ You can run traditional models (e.g. n-grams + Logistic Regression) or pretraine
 
 ### Traditional models
 
-Run `bag of words with Logistic Regression`:
+Run `bag of words + Logistic Regression`:
 
 ```bash
 python3 src/train_models.py --model=bow
