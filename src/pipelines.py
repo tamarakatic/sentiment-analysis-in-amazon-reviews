@@ -19,11 +19,11 @@ from vectorizers import TfidfMeanEmbeddingVectorizer
 from vectorizers import Doc2VecVectorizer
 
 
-def bag_of_words(classifier, tf_idf=True):
+def bag_of_words(classifier, tf_idf=False):
     if tf_idf:
         steps = [("vect", TfidfVectorizer())]
     else:
-        steps = [("count", CountVectorizer())]
+        steps = [("vect", CountVectorizer())]
 
     steps.append(("cls", classifier))
     return Pipeline(steps)
