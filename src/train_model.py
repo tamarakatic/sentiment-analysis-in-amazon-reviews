@@ -59,7 +59,7 @@ def bag_of_words_pipeline():
     )
 
     log_regression.set_params(
-        vect__max_features=50000,
+        vect__max_features=50000
     )
 
     return [("BoW + LR", log_regression)]
@@ -147,7 +147,7 @@ def main(model_pipelines):
         Options.PUNCTUATION,
         Options.REPEATING_VOWELS,
         Options.STOPWORDS,
-        Options.URLS,
+        Options.URLS
     )
 
     samples, labels = load_and_clean_data(TRAIN_PATH, options, ROWS)
