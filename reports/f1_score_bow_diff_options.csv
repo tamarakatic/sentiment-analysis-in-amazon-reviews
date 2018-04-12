@@ -1,0 +1,2 @@
+train_size,emails_and_urls,stopwords,emoticons,lemmatizer,punctuation,repeating_vowels
+150000,0.920,0.920,0.921,0.918,0.919,0.921
