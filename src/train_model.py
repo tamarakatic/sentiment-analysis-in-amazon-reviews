@@ -45,24 +45,48 @@ def gradient_boosting_pipeline():
         )
     )
 
-    gradent_boosting.set_params(
-        vect__ngram_range=(1, 5),
-        vect__max_features=500000,
+    gradent_boosting_tfidf = pipelines.bag_of_words(
+        classifier=GradientBoostingClassifier(
+            n_estimators=5000,
+            learning_rate=0.2,
+            random_state=10
+        ),
+        tf_idf=True
     )
 
-    return [("BoN + GB", gradent_boosting)]
+    gb_pipelines = [
+        ("BoN + GB", gradent_boosting),
+        ("BoN + GB + TFIDF", gradent_boosting_tfidf)
+    ]
+
+    for name, pipe in gb_pipelines:
+        pipe.set_params(
+            vect__ngram_range=(1, 5),
+            vect__max_features=500000,
+        )
+
+        yield (name, pipe)
 
 
 def bag_of_words_pipeline():
     log_regression = pipelines.bag_of_words(
+        classifier=LogisticRegression(C=10.0)
+    )
+
+    log_regression_tfidf = pipelines.bag_of_words(
         classifier=LogisticRegression(C=10.0),
+        tf_idf=True
     )
 
-    log_regression.set_params(
-        vect__max_features=50000
-    )
+    bow_pipelines = [
+        ("BoW + LR", log_regression),
+        ("BoW + LR + TFIDF", log_regression_tfidf)
+    ]
 
-    return [("BoW + LR", log_regression)]
+    for name, pipe in bow_pipelines:
+        pipe.set_params(vect__max_features=50000)
+
+        yield (name, pipe)
 
 
 def bag_of_ngrams_pipelines():
@@ -105,7 +129,7 @@ def bag_of_ngrams_pipelines():
     for name, pipe in bon_pipelines:
         pipe.set_params(
             vect__ngram_range=(1, 5),
-            vect__max_features=500000,
+            vect__max_features=500000
         )
 
         yield (name, pipe)
