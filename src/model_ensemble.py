@@ -10,6 +10,8 @@ from src.definitions import ROOT_PATH
 from src.definitions import TEST_PATH
 from src.data.loaders import load_and_clean_data
 
+from sklearn import metrics
+
 from keras.preprocessing.sequence import pad_sequences
 
 MAX_NUM_WORDS = 30000
@@ -22,8 +24,8 @@ MODEL_PARAMS = [
     ("lstm", 32, None)
 ]
 
-# Model ensamble weights obtained with SLSQP optimizer
-# See notebooks/6.0-model-ensamble-optimization.ipynb for details
+# Model ensemble weights obtained with SLSQP optimizer
+# See notebooks/6.0-model-ensemble-optimization.ipynb for details
 WEIGHTS = [
     0.32983265,
     0.33383343,
@@ -80,7 +82,7 @@ def models_prediction(sequences, labels, models):
     return predictions
 
 
-def ensamble_prediction(model_predictions, weights=WEIGHTS):
+def ensemble_prediction(model_predictions, weights=WEIGHTS):
     weights = np.array(weights).reshape(-1, 1)
     predictions = weights * model_predictions
     predictions = [float(round(x)) for x in np.sum(predictions, axis=0)]
@@ -99,12 +101,21 @@ def evaluate(samples, labels):
     sequences = tokenizer.texts_to_sequences(samples)
 
     predictions = models_prediction(sequences, test_labels, models)
-    predictions = ensamble_prediction(predictions, test_labels)
-    ensamble_accuracy = np.mean(predictions == labels)
-    return ensamble_accuracy
+    predictions = ensemble_prediction(predictions, test_labels)
+
+    accuracy = metrics.accuracy_score(test_labels, predictions)
+    precision = metrics.precision_score(test_labels, predictions)
+    recall = metrics.recall_score(test_labels, predictions)
+    f1_score = metrics.f1_score(test_labels, predictions)
+
+    return accuracy, precision, recall, f1_score
 
 
 if __name__ == "__main__":
     test_samples, test_labels = load_and_clean_data(path=TEST_PATH)
-    ensamble_accuracy = evaluate(test_samples, test_labels)
-    print("\nEnsamble accuracy: {:.4f}".format(ensamble_accuracy))
+    accuracy, precision, recall, f1_score = evaluate(test_samples, test_labels)
+
+    print("Accuracy:  {:.4f}".format(accuracy))
+    print("Precision: {:.4f}".format(precision))
+    print("Recall:    {:.4f}".format(recall))
+    print("F1-score:  {:.4f}".format(f1_score))
