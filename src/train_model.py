@@ -19,7 +19,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import GradientBoostingClassifier
 
 
-ROWS = 100000
+ROWS = 50000
 
 init_colorama()
 
