@@ -5,6 +5,8 @@ import pickle
 import argparse
 import numpy as np
 
+from train_model import color_text
+
 from definitions import ROOT_PATH
 from definitions import GLOVE_PATH
 from definitions import WORD2VEC_PATH
@@ -19,8 +21,15 @@ from deep_word_models import ConvNet
 from deep_word_models import SimpleLSTM
 from deep_word_models import ConvNetLSTM
 
+from colorama import init as init_colorama
+from colorama import Fore
+
+from sklearn import metrics
+
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
+
+init_colorama()
 
 ROWS = None  # Load all reviews (~3.6M)
 EPOCHS = 5
@@ -206,12 +215,25 @@ def test(tokenizer, args):
     padding = "post" if args.convnet else "pre"
     test_samples = reviews_to_sequences(test_samples, tokenizer, padding)
 
-    loss, accuracy = model.evaluate(test_samples, test_labels,
-                                    verbose=1,
-                                    batch_size=args.batch_size)
+    predictions = model.predict(test_samples, verbose=1)
+    predictions = [float(round(x[0])) for x in predictions]
 
-    print("\n-- Test loss {:.4f}".format(loss))
-    print("-- Test accuracy {:.4f}".format(accuracy))
+    accuracy = metrics.accuracy_score(test_labels, predictions)
+    precision = metrics.precision_score(test_labels, predictions)
+    recall = metrics.recall_score(test_labels, predictions)
+    f1_score = metrics.f1_score(test_labels, predictions)
+
+    print(color_text("Accuracy:  ", color=Fore.GREEN) +
+          color_text("{:.4f}".format(accuracy), color=Fore.RED))
+
+    print(color_text("Precision: ", color=Fore.GREEN) +
+          color_text("{:.4f}".format(precision), color=Fore.RED))
+
+    print(color_text("Recall:    ", color=Fore.GREEN) +
+          color_text("{:.4f}".format(recall), color=Fore.RED))
+
+    print(color_text("F1-score:  ", color=Fore.GREEN) +
+          color_text("{:.4f}".format(f1_score), color=Fore.RED))
 
 
 if __name__ == "__main__":
