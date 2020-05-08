@@ -145,3 +145,19 @@ To form model ensamble and get ~1% more accuracy on test set run:
 ```bash
 python3 src/model_ensamble.py
 ```
+
+## Citation
+
+If you used this code in your research, please cite with:
+
+```
+@INPROCEEDINGS{8524814,
+  author={T. {Katić} and N. {Milićević}},
+  booktitle={2018 IEEE 16th International Symposium on Intelligent Systems and Informatics (SISY)},
+  title={Comparing Sentiment Analysis and Document Representation Methods of Amazon Reviews},
+  year={2018},
+  volume={},
+  number={},
+  pages={000283-000286},
+}
+```
